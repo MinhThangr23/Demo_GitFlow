@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Menu_Management.Class
 {
-    internal class MainHelper
+    public class MainHelper
     {
         public static string currentCategoryID = ""; // ID của danh mục hiện tại
 

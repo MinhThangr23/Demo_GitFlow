@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Menu_Management.Class
 {
-    internal class Login
+    public class Login
     {
         public static string User;
         public static string Password;

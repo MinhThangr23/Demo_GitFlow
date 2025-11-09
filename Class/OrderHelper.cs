@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Menu_Management.Class
 {
-    internal class OrderHelper
+    public class OrderHelper
     {
         public static float totalPrice = 0; //Tổng tiền của đơn hàng hiện tại
         private static int currentOrderID = 0;
@@ -23,7 +23,7 @@ namespace Menu_Management.Class
                 OrderIDChanged?.Invoke(null, EventArgs.Empty); // Gọi sự kiện khi ID đơn hàng thay đổi
             }
         }
-        internal static void CalculateTotalPrice(FlowLayoutPanel Orderfl)
+        public static void CalculateTotalPrice(FlowLayoutPanel Orderfl)
         {
             float total = 0;
             foreach (Control item in Orderfl.Controls)
