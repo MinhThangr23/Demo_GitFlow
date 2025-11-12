@@ -43,35 +43,63 @@ namespace Menu_Management
             if (!isValidInput())
             {
                 MessageBox.Show("All fields must be filled");
+                return;
+            }
+
+            if (CheckLogin(Username.Text, Password.Text))
+            {
+                OpenMainForm(Login.Fullname);
             }
             else
             {
-                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+                MessageBox.Show("Invalid username or password");
+            }
+
+        }
+
+        // ✳️ Hàm 1: kiểm tra đăng nhập trong CSDL
+        private bool CheckLogin(string username, string password)
+        {
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+            {
+                sqlcon.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Accounts WHERE UserName = @username AND Password = @password", sqlcon))
                 {
-                    sqlcon.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT * FROM Accounts WHERE UserName = @username AND Password = @password", sqlcon);
-                    cmd.Parameters.AddWithValue("@username", Username.Text);
-                    cmd.Parameters.AddWithValue("@password", Password.Text);
-                    SqlDataReader reader = cmd.ExecuteReader();
-                    if (reader.HasRows)
+                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@password", password);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        reader.Read();
-                        Login.User = reader["UserName"].ToString();
-                        Login.Password = reader["Password"].ToString();
-                        Login.Fullname = reader["FullName"].ToString();
-                        int RoleID = Convert.ToInt32(reader["RoleID"]);
-                        Login.Role = Login.GetRole(RoleID);
-                        Login.SetAccountStatus(Login.User, "Online");
-                        this.Hide();
-                        MainForm mainForm = new MainForm(Login.Fullname);
-                        mainForm.Show();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Invalid username or password");
+                        if (reader.HasRows)
+                        {
+                            reader.Read();
+                            LoadUserData(reader);
+                            return true;
+                        }
                     }
                 }
             }
+            return false;
         }
+
+        // ✳️ Hàm 2: nạp thông tin người dùng từ kết quả truy vấn
+        private void LoadUserData(SqlDataReader reader)
+        {
+            Login.User = reader["UserName"].ToString();
+            Login.Password = reader["Password"].ToString();
+            Login.Fullname = reader["FullName"].ToString();
+            int roleID = Convert.ToInt32(reader["RoleID"]);
+            Login.Role = Login.GetRole(roleID);
+            Login.SetAccountStatus(Login.User, "Online");
+        }
+
+        // ✳️ Hàm 3: mở form chính sau khi đăng nhập thành công
+        private void OpenMainForm(string fullname)
+        {
+            this.Hide();
+            MainForm mainForm = new MainForm(fullname);
+            mainForm.Show();
+        }
+
+
     }
 }
