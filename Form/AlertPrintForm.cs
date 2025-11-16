@@ -108,31 +108,49 @@ namespace Menu_Management
 
         private void PrintButton_Click(object sender, EventArgs e)
         {
-            BuildBillContent(); // Tạo nội dung hóa đơn
+            BuildBillContent();
 
-            // Gán tài liệu cho dialog xem trước
+            ShowPrintPreview();
+
+            if (ShowPrintDialog())
+            {
+                PrintDocumentNow();
+            }
+
+            CompleteAfterPrinting();
+        }
+        //Xem truoc khi in
+        private void ShowPrintPreview()
+        {
             previewDialog.Document = printDocument;
             previewDialog.PrintPreviewControl.Zoom = 1.3;
             previewDialog.Width = 600;
             previewDialog.Height = 800;
-
-            // Hiển thị xem trước
             previewDialog.ShowDialog();
-
-            // Sau khi preview xong → chọn máy in để in
+        }
+        //Mở dialog chọn máy in
+        private bool ShowPrintDialog()
+        {
             using (PrintDialog printDialog = new PrintDialog())
             {
                 printDialog.Document = printDocument;
-
-                if (printDialog.ShowDialog() == DialogResult.OK)
-                {
-                    printDocument.Print();
-                }
+                return printDialog.ShowDialog() == DialogResult.OK;
             }
-            this.Close(); // Đóng form sau khi in
-            FinalizeBill(); // Cập nhật trạng thái hóa đơn thành "Done" sau khi in
-            BillHelper.LoadBills(billform.billflowpanel, billform); // Tải lại danh sách hóa đơn
         }
+        //Thực hiện in
+        private void PrintDocumentNow()
+        {
+            printDocument.Print();
+        }
+        //Xử lý sau khi in (đóng form + cập nhật DB + load lại bill
+        private void CompleteAfterPrinting()
+        {
+            this.Close();
+            FinalizeBill();
+            BillHelper.LoadBills(billform.billflowpanel, billform);
+        }
+
+
 
         private void NotPrintButton_Click(object sender, EventArgs e)
         {

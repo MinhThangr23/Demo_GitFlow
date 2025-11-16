@@ -85,6 +85,7 @@ namespace Menu_Management
             MainHelper.ShowForm(adminCheckout, MainPanel);
         }
 
+
         private void Logout_Click(object sender, EventArgs e)
         {
             ResetAccount();
