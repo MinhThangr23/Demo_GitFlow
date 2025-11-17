@@ -137,11 +137,13 @@ namespace Menu_Management
             }
         }
 
-        private void AddButton_Click(object sender, EventArgs e)
+        private void AddBtn_Click(object sender, EventArgs e)
         {
             if (!ValidateInput()) return;
+
             byte[] imageBytes = GetImageBytesFromPictureBox();
             if (imageBytes == null) return;
+
             try
             {
                 using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
@@ -174,10 +176,12 @@ namespace Menu_Management
             }
         }
 
-        private void UpdateButton_Click(object sender, EventArgs e)
+        private void AlterBtn_Click(object sender, EventArgs e)
         {
             if (!ValidateInput(requireImage: false)) return; // Ảnh optional cho update
+
             byte[] imageBytes = GetImageBytesFromPictureBox();
+
             DataGridViewRow selectedRow = ShowData.CurrentRow;
             if (selectedRow == null || selectedRow.Cells["DishID"].Value == null)
             {
@@ -185,6 +189,7 @@ namespace Menu_Management
                 return;
             }
             string dishId = selectedRow.Cells["DishID"].Value.ToString();
+
             try
             {
                 using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
@@ -217,7 +222,7 @@ namespace Menu_Management
             }
         }
 
-        private void DeleteButton_Click(object sender, EventArgs e)
+        private void RemoveBtn_Click(object sender, EventArgs e)
         {
             DataGridViewRow selectedRow = ShowData.CurrentRow;
             if (selectedRow == null || selectedRow.Cells["DishID"].Value == null)
@@ -226,6 +231,7 @@ namespace Menu_Management
                 return;
             }
             string dishId = selectedRow.Cells["DishID"].Value.ToString();
+
             try
             {
                 using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
@@ -253,7 +259,7 @@ namespace Menu_Management
             }
         }
 
-        private void BrowseButton_Click(object sender, EventArgs e)
+        private void Browse_Click(object sender, EventArgs e)
         {
             pictureBox.Image = null; // Reset ảnh trước
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
@@ -285,6 +291,7 @@ namespace Menu_Management
                     {
                         pictureBox.Image = null;
                     }
+                    // Cập nhật CategoryCBB nếu cần (giả sử có cột CategoryID)
                     if (row.Cells["CategoryID"].Value != null)
                     {
                         CategoryCBB.SelectedValue = row.Cells["CategoryID"].Value;
