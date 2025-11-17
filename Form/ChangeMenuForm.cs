@@ -51,7 +51,7 @@ namespace Menu_Management
         {
             if (image == null) return null;
             using var ms = new MemoryStream();
-            image.Save(ms, image.RawFormat);
+            image.Save(ms, System.Drawing.Imaging.ImageFormat.Png); // Use PNG format
             return ms.ToArray();
         }
 
@@ -181,7 +181,10 @@ namespace Menu_Management
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                pictureBox.Image = Image.FromFile(openFileDialog.FileName);
+                using (var img = Image.FromFile(openFileDialog.FileName))
+                {
+                    pictureBox.Image = new Bitmap(img); // Clone image to release file lock
+                }
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
             }
             pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
