@@ -16,190 +16,168 @@ namespace Menu_Management
 {
     public partial class ChangeMenuForm : Form
     {
-        Panel mainpanel;
+        private Panel mainpanel;
+
         public ChangeMenuForm(Panel mainpanel)
         {
             InitializeComponent();
-            this.mainpanel=mainpanel;
+            this.mainpanel = mainpanel;
         }
 
         private void LoadDishes()
         {
-            ShowData.ColumnHeadersHeight = 30; // Đặt chiều cao tiêu đề cột
-            ShowData.Columns.Clear(); // Xóa các cột hiện tại trong DataGridView
+            ShowData.ColumnHeadersHeight = 30;
+            ShowData.Columns.Clear();
             try
             {
-                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-                {
-                    sqlcon.Open();
-                    SqlCommand cmd = new SqlCommand("SELECT * FROM Dishes WHERE IsDeleted = 0", sqlcon);
-                    SqlDataAdapter adapter = new SqlDataAdapter(cmd);
-                    DataTable dt = new DataTable();
-                    adapter.Fill(dt);
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+                using var cmd = new SqlCommand("SELECT * FROM Dishes WHERE IsDeleted = 0", sqlcon);
+                using var adapter = new SqlDataAdapter(cmd);
+                var dt = new DataTable();
+                adapter.Fill(dt);
 
-                    // Gán dữ liệu vào DataGridView
-                    ShowData.DataSource = dt;
-
-                    ShowData.Columns["DishIMG"].Visible = false; // Ẩn cột ảnh gốc nếu không cần thiết
-                    ShowData.Columns["IsDeleted"].Visible = false; 
-
-                }
+                ShowData.DataSource = dt;
+                ShowData.Columns["DishIMG"].Visible = false;
+                ShowData.Columns["IsDeleted"].Visible = false;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Lỗi khi load dữ liệu: " + ex.Message);
             }
-
         }
+
+        private byte[] GetImageBytes(Image image)
+        {
+            if (image == null) return null;
+            using var ms = new MemoryStream();
+            image.Save(ms, image.RawFormat);
+            return ms.ToArray();
+        }
+
         private void AddBtn_Click(object sender, EventArgs e)
-        { 
+        {
+            if (pictureBox.Image == null)
+            {
+                MessageBox.Show("Vui lòng chọn ảnh món ăn.");
+                return;
+            }
+
             try
             {
-                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+
+                using var insertCmd = new SqlCommand(
+                    "INSERT INTO Dishes (DishID, DishName, CategoryID, Price, DishIMG) VALUES (@DishID, @DishName, @CategoryID, @Price, @DishIMG)", sqlcon);
+                insertCmd.Parameters.AddWithValue("@DishID", DishIdTxt.Text);
+                insertCmd.Parameters.AddWithValue("@DishName", NameTxt.Text);
+                insertCmd.Parameters.AddWithValue("@CategoryID", CategoryCBB.SelectedValue);
+                insertCmd.Parameters.AddWithValue("@Price", float.Parse(PriceTxt.Text));
+                insertCmd.Parameters.AddWithValue("@DishIMG", GetImageBytes(pictureBox.Image));
+
+                if (insertCmd.ExecuteNonQuery() > 0)
                 {
-
-                    sqlcon.Open();
-
-                    if (pictureBox.Image == null)
-                    {
-                        MessageBox.Show("Vui lòng chọn ảnh món ăn.");
-                        return;
-                    }
-
-                    // Xử lý ảnh
-                    byte[] imageBytes;
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        pictureBox.Image.Save(ms, pictureBox.Image.RawFormat);
-                        imageBytes = ms.ToArray();
-                    }
-
-                    // Thêm món ăn vào bảng Dishes
-                    SqlCommand insertCmd = new SqlCommand("INSERT INTO Dishes (DishID, DishName, CategoryID, Price, DishIMG) VALUES (@DishID, @DishName, @CategoryID, @Price, @DishIMG)", sqlcon);
-                    insertCmd.Parameters.AddWithValue("@DishID", DishIdTxt.Text);
-                    insertCmd.Parameters.AddWithValue("@DishName", NameTxt.Text);
-                    insertCmd.Parameters.AddWithValue("@CategoryID", CategoryCBB.SelectedValue);
-                    insertCmd.Parameters.AddWithValue("@Price", float.Parse(PriceTxt.Text));
-                    insertCmd.Parameters.AddWithValue("@DishIMG", imageBytes);
-
-                    int rowsAffected = insertCmd.ExecuteNonQuery();
-
-                    if (rowsAffected > 0)
-                    {
-                        MessageBox.Show("Thêm món ăn thành công!");
-                        LoadDishes();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Không thể thêm món ăn.");
-                    }
-
+                    MessageBox.Show("Thêm món ăn thành công!");
+                    LoadDishes();
+                }
+                else
+                {
+                    MessageBox.Show("Không thể thêm món ăn.");
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Lỗi: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
         }
-
 
         private void AlterBtn_Click(object sender, EventArgs e)
         {
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+            if (ShowData.CurrentRow == null)
             {
+                MessageBox.Show("Vui lòng chọn món ăn để cập nhật.");
+                return;
+            }
+
+            try
+            {
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
                 sqlcon.Open();
 
-                // Xử lý ảnh
-                byte[] imageBytes;
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    using (Image imgClone = new Bitmap(pictureBox.Image)) // Clone lại ảnh
-                    {
-                        imgClone.Save(ms, pictureBox.Image.RawFormat); // Lưu clone thay vì ảnh gốc
-                    }
-                    imageBytes = ms.ToArray();
-                }
-                DataGridViewRow selectedRow = ShowData.CurrentRow;
-                string DishId = selectedRow.Cells["DishID"].Value.ToString();
-
-
-                SqlCommand updateCmd = new SqlCommand("UPDATE Dishes SET DishName=@DishName, CategoryID=@CategoryID, Price=@Price, DishIMG=@DishIMG WHERE DishID=@DishID", sqlcon);
-                updateCmd.Parameters.AddWithValue("@DishID", DishId);
+                var dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
+                using var updateCmd = new SqlCommand(
+                    "UPDATE Dishes SET DishName=@DishName, CategoryID=@CategoryID, Price=@Price, DishIMG=@DishIMG WHERE DishID=@DishID", sqlcon);
+                updateCmd.Parameters.AddWithValue("@DishID", dishId);
                 updateCmd.Parameters.AddWithValue("@DishName", NameTxt.Text);
                 updateCmd.Parameters.AddWithValue("@CategoryID", CategoryCBB.SelectedValue);
                 updateCmd.Parameters.AddWithValue("@Price", float.Parse(PriceTxt.Text));
-                updateCmd.Parameters.AddWithValue("@DishIMG", imageBytes);
+                updateCmd.Parameters.AddWithValue("@DishIMG", GetImageBytes(pictureBox.Image));
 
-                int rows = updateCmd.ExecuteNonQuery();
-                if (rows > 0)
+                if (updateCmd.ExecuteNonQuery() > 0)
                     MessageBox.Show("Cập nhật thành công!");
                 else
                     MessageBox.Show("Không cập nhật được!");
 
                 LoadDishes();
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi khi cập nhật: " + ex.Message);
+            }
         }
-
 
         private void RemoveBtn_Click(object sender, EventArgs e)
         {
+            if (ShowData.CurrentRow == null || ShowData.CurrentRow.Cells["DishID"].Value == null)
+            {
+                MessageBox.Show("Vui lòng chọn món ăn cần xóa.");
+                return;
+            }
+
             try
             {
-                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-                {
-                    sqlcon.Open();
-                    SqlCommand deleteCmd = new SqlCommand("UPDATE Dishes SET IsDeleted = '1' WHERE DishID=@DishID", sqlcon);
-                    DataGridViewRow selectedRow = ShowData.CurrentRow;
-                    if (selectedRow == null || selectedRow.Cells["DishID"].Value == null)
-                    {
-                        MessageBox.Show("Vui lòng chọn món ăn cần xóa.");
-                        return;
-                    }
-                    string dishId = selectedRow.Cells["DishID"].Value.ToString();
-                    deleteCmd.Parameters.AddWithValue("@DishID", dishId);
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+                var dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
+                using var deleteCmd = new SqlCommand("UPDATE Dishes SET IsDeleted = 1 WHERE DishID=@DishID", sqlcon);
+                deleteCmd.Parameters.AddWithValue("@DishID", dishId);
 
-                    int rows = deleteCmd.ExecuteNonQuery();
-                    if (rows > 0)
-                        MessageBox.Show("Xóa thành công!");
-                    else
-                        MessageBox.Show("Không tìm thấy món ăn cần xóa.");
+                if (deleteCmd.ExecuteNonQuery() > 0)
+                    MessageBox.Show("Xóa thành công!");
+                else
+                    MessageBox.Show("Không tìm thấy món ăn cần xóa.");
 
-                    LoadDishes();
-                }
+                LoadDishes();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Có đơn vẫn chưa thanh toán chứa món này");
             }
-
         }
-
 
         private void ChangeMenuForm_Load(object sender, EventArgs e)
         {
+            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+            sqlcon.Open();
+            using var sqlcmd = new SqlCommand("SELECT * FROM Categories", sqlcon);
+            using var adapter = new SqlDataAdapter(sqlcmd);
+            var dt = new DataTable();
+            adapter.Fill(dt);
 
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-            {
-                sqlcon.Open();
-                SqlCommand sqlcmd = new SqlCommand("SELECT * FROM Categories", sqlcon);
-                SqlDataAdapter adapter = new SqlDataAdapter(sqlcmd);
-                DataTable dt = new DataTable();
-                adapter.Fill(dt);
-
-                CategoryCBB.DataSource = dt;
-                CategoryCBB.DisplayMember = "CategoryName"; // Hiển thị tên loại món ăn
-                CategoryCBB.ValueMember = "CategoryID"; // Lưu giá trị ID loại món ăn
-                LoadDishes();
-            }
+            CategoryCBB.DataSource = dt;
+            CategoryCBB.DisplayMember = "CategoryName";
+            CategoryCBB.ValueMember = "CategoryID";
+            LoadDishes();
         }
-
 
         private void Browse_Click(object sender, EventArgs e)
         {
-            pictureBox.Controls.Clear(); // Đặt lại ảnh trước khi chọn ảnh mới
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp";
+            pictureBox.Controls.Clear();
+            using var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp"
+            };
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -207,7 +185,6 @@ namespace Menu_Management
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
             }
             pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
-
         }
 
         private void ShowData_SelectionChanged(object sender, EventArgs e)
@@ -216,27 +193,15 @@ namespace Menu_Management
             {
                 if (ShowData.CurrentRow != null && ShowData.CurrentRow.Index >= 0)
                 {
-                    DataGridViewRow row = ShowData.CurrentRow;
+                    var row = ShowData.CurrentRow;
+                    DishIdTxt.Text = row.Cells["DishID"].Value?.ToString();
+                    NameTxt.Text = row.Cells["DishName"].Value?.ToString();
+                    PriceTxt.Text = row.Cells["Price"].Value?.ToString();
 
-                    DishIdTxt.Text = row.Cells["DishID"].Value.ToString();
-                    NameTxt.Text = row.Cells["DishName"].Value.ToString();
-                    PriceTxt.Text = row.Cells["Price"].Value.ToString();
-
-                    if (row.Cells["DishIMG"].Value != DBNull.Value)
+                    if (row.Cells["DishIMG"].Value is byte[] imgBytes)
                     {
-                        object cellValue = row.Cells["DishIMG"].Value;
-
-                        if (cellValue is byte[] imgBytes)
-                        {
-                            using (MemoryStream ms = new MemoryStream(imgBytes))
-                            {
-                                pictureBox.Image = Image.FromStream(ms);
-                            }
-                        }
-                        else if (cellValue is Image img)
-                        {
-                            pictureBox.Image = img;
-                        }
+                        using var ms = new MemoryStream(imgBytes);
+                        pictureBox.Image = Image.FromStream(ms);
                         pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
                     }
                     else
@@ -244,14 +209,11 @@ namespace Menu_Management
                         pictureBox.Image = null;
                     }
                 }
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Lỗi khi chọn món ăn: " + ex.Message);
-
             }
-
         }
     }
 }
