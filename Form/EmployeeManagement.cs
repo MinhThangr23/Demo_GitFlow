@@ -21,113 +21,100 @@ namespace Menu_Management
             DeleteEmployee.Enabled = false;
             DatabaseHelper.LoadRoles(RoleComboBox);
             DatabaseHelper.ShowEmployee(EmployeeViewer);
+        }
 
-        }
-        private bool isValidInput()
+        private bool IsValidInput()
         {
-            if (string.IsNullOrWhiteSpace(Username.Text) || string.IsNullOrWhiteSpace(Password.Text) || string.IsNullOrWhiteSpace(Fullname.Text) || GenderComboBox.SelectedItem == null || RoleComboBox.SelectedItem == null)
-            {
-                return false;
-            }
-            return true;
+            return !string.IsNullOrWhiteSpace(Username.Text)
+                && !string.IsNullOrWhiteSpace(Password.Text)
+                && !string.IsNullOrWhiteSpace(Fullname.Text)
+                && GenderComboBox.SelectedItem != null
+                && RoleComboBox.SelectedItem != null;
         }
-        private bool isExist(string username)
+
+        private bool IsExist(string username)
         {
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-            {
-                sqlcon.Open();
-                string query = "SELECT COUNT(*) FROM Accounts WHERE UserName = @username";
-                SqlCommand sqlcmd = new SqlCommand(query, sqlcon);
-                sqlcmd.Parameters.AddWithValue("@username", username);
-                int count = (int)sqlcmd.ExecuteScalar();
-                if (count > 0)
-                {
-                    return true; // Tài khoản hoặc tên đầy đủ đã tồn tại
-                }
-                else
-                {
-                    return false; // Tài khoản chưa tồn tại
-                }
-            }
+            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+            sqlcon.Open();
+            var query = "SELECT COUNT(*) FROM Accounts WHERE UserName = @username";
+            using var sqlcmd = new SqlCommand(query, sqlcon);
+            sqlcmd.Parameters.AddWithValue("@username", username);
+            return (int)sqlcmd.ExecuteScalar() > 0;
         }
+
         private void AddEmployee_Click(object sender, EventArgs e)
         {
-            if (!isValidInput())
+            if (!IsValidInput())
             {
                 MessageBox.Show("Please fill in all fields.");
                 return;
             }
-            string username = Username.Text.Trim();
-            string fullname = Fullname.Text.Trim();
-            if (isExist(username))
+
+            var username = Username.Text.Trim();
+            if (IsExist(username))
             {
                 MessageBox.Show("Username already exists. Please choose a different username.");
                 return;
             }
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+
+            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+            sqlcon.Open();
+            var query = @"INSERT INTO Accounts (UserName, Password, FullName, Gender, RoleID)
+                          VALUES (@username, @password, @FullName, @Gender, 
+                          (SELECT RoleID FROM Roles WHERE RoleName= @RoleID))";
+            using var sqlcmd = new SqlCommand(query, sqlcon);
+            sqlcmd.Parameters.AddWithValue("@username", username);
+            sqlcmd.Parameters.AddWithValue("@password", Password.Text.Trim());
+            sqlcmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
+            sqlcmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
+            sqlcmd.Parameters.AddWithValue("@RoleID", RoleComboBox.SelectedItem.ToString().Trim());
+
+            if (sqlcmd.ExecuteNonQuery() > 0)
             {
-                sqlcon.Open();
-                string query = "INSERT INTO Accounts (UserName, Password, FullName, Gender, RoleID) VALUES\r\n(@username, @password, @FullName, @Gender, (SELECT RoleID FROM Roles WHERE RoleName= @RoleID))";
-                SqlCommand sqlcmd = new SqlCommand(query, sqlcon);
-                sqlcmd.Parameters.AddWithValue("@username", Username.Text.Trim());
-                sqlcmd.Parameters.AddWithValue("@password", Password.Text.Trim());
-                sqlcmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
-                sqlcmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
-                sqlcmd.Parameters.AddWithValue("@RoleID", RoleComboBox.SelectedItem.ToString().Trim());
-                int rows = sqlcmd.ExecuteNonQuery();
-                if (rows == 0)
-                {
-                    MessageBox.Show("Fail to add account");
-                }
-                else
-                {
-                    MessageBox.Show("Account added successfully");
-                    DatabaseHelper.ShowEmployee(EmployeeViewer);
-                    Username.Clear();
-                    Password.Clear();
-                    Fullname.Clear();
-                }
+                MessageBox.Show("Account added successfully");
+                DatabaseHelper.ShowEmployee(EmployeeViewer);
+                Username.Clear();
+                Password.Clear();
+                Fullname.Clear();
+            }
+            else
+            {
+                MessageBox.Show("Fail to add account");
             }
         }
+
         private void DelelteEmployee_Click(object sender, EventArgs e)
         {
-            DialogResult r = MessageBox.Show("Are you sure to delete this account?",
-                "Confirm Deletion",
-                MessageBoxButtons.YesNo);
-            if (r == DialogResult.No)
-            {
+            if (MessageBox.Show("Are you sure to delete this account?", "Confirm Deletion", MessageBoxButtons.YesNo) == DialogResult.No)
                 return;
-            }    
-            DataGridViewRow selectedRow = EmployeeViewer.SelectedRows[0];
-            if (selectedRow.Cells[0].Value == null)
+
+            if (EmployeeViewer.SelectedRows.Count == 0 || EmployeeViewer.SelectedRows[0].Cells[0].Value == null)
             {
                 MessageBox.Show("Please select an account to delete.");
                 return;
             }
-            string username = selectedRow.Cells["UserName"].Value.ToString();
-            if(Login.isOnline(username))
+
+            var username = EmployeeViewer.SelectedRows[0].Cells["UserName"].Value.ToString();
+            if (Login.isOnline(username))
             {
                 MessageBox.Show("This account is currently online!!");
                 return;
             }
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+
+            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+            sqlcon.Open();
+            var query = "DELETE FROM Accounts WHERE UserName = @username";
+            using var sqlcmd = new SqlCommand(query, sqlcon);
+            sqlcmd.Parameters.AddWithValue("@username", username);
+
+            if (sqlcmd.ExecuteNonQuery() > 0)
             {
-                sqlcon.Open();
-                string query = "DELETE FROM Accounts WHERE UserName = @username";
-                SqlCommand sqlcmd = new SqlCommand(query, sqlcon);
-                sqlcmd.Parameters.AddWithValue("@username", username);
-                int rows = sqlcmd.ExecuteNonQuery();
-                if (rows == 0)
-                {
-                    MessageBox.Show("Fail to delete account");
-                    return;
-                }
-                else
-                {
-                    MessageBox.Show("Account deleted successfully");
-                    DatabaseHelper.ShowEmployee(EmployeeViewer);
-                    return;
-                }
+                MessageBox.Show("Account deleted successfully");
+                DatabaseHelper.ShowEmployee(EmployeeViewer);
+            }
+            else
+            {
+                MessageBox.Show("Fail to delete account");
             }
         }
 
@@ -135,6 +122,7 @@ namespace Menu_Management
         {
             CurrentEmployeeFlowPanel.Controls.Clear();
             UC_UserItem user;
+
             if (EmployeeViewer.SelectedRows.Count == 0)
             {
                 DeleteEmployee.Enabled = false;
@@ -143,47 +131,38 @@ namespace Menu_Management
             else
             {
                 DeleteEmployee.Enabled = true;
-                DataGridViewRow selectedrow = EmployeeViewer.SelectedRows[0];
-                string username = selectedrow.Cells["UserName"].Value.ToString();
-                string fullname = selectedrow.Cells["FullName"].Value.ToString();
-                string gender = selectedrow.Cells["Gender"].Value.ToString();
-                string role = selectedrow.Cells["RoleName"].Value.ToString();
-                user = new UC_UserItem(username, fullname, gender, role);
+                var selectedrow = EmployeeViewer.SelectedRows[0];
+                user = new UC_UserItem(
+                    selectedrow.Cells["UserName"].Value?.ToString(),
+                    selectedrow.Cells["FullName"].Value?.ToString(),
+                    selectedrow.Cells["Gender"].Value?.ToString(),
+                    selectedrow.Cells["RoleName"].Value?.ToString()
+                );
             }
             CurrentEmployeeFlowPanel.Controls.Add(user);
-
-
         }
 
         private void DeleteAllEmployee_Click(object sender, EventArgs e)
         {
-            DialogResult r = MessageBox.Show("This gonna delete all of the employees'accounts exclude admins\nThink twice before decide",
-            "Confirm All Deletion",
-            MessageBoxButtons.YesNo);
-            if (r == DialogResult.No)
-            {
+            if (MessageBox.Show(
+                "This gonna delete all of the employees'accounts exclude admins\nThink twice before decide",
+                "Confirm All Deletion",
+                MessageBoxButtons.YesNo) == DialogResult.No)
                 return;
+
+            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+            sqlcon.Open();
+            var query = "DELETE FROM Accounts WHERE RoleID = (SELECT RoleID FROM Roles WHERE RoleName = 'Employee') AND Status = 'Offline'";
+            using var sqlcmd = new SqlCommand(query, sqlcon);
+
+            if (sqlcmd.ExecuteNonQuery() > 0)
+            {
+                MessageBox.Show("Accounts deleted successfully");
+                DatabaseHelper.ShowEmployee(EmployeeViewer);
             }
             else
             {
-                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-                {
-                    sqlcon.Open();
-                    string query = "DELETE FROM Accounts WHERE RoleID = (SELECT RoleID FROM Roles WHERE RoleName = 'Employee') AND Status = 'Offline'";
-                    SqlCommand sqlcmd = new SqlCommand(query, sqlcon);
-                    int rows = sqlcmd.ExecuteNonQuery();
-                    if (rows == 0)
-                    {
-                        MessageBox.Show("Fail to delete all");
-                        return;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Accounts deleted successfully");
-                        DatabaseHelper.ShowEmployee(EmployeeViewer);
-                        return;
-                    }
-                }
+                MessageBox.Show("Fail to delete all");
             }
         }
     }
