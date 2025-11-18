@@ -13,7 +13,7 @@ namespace Menu_Management
              // Khởi tạo Serilog
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.File("logs/app_log.txt", rollingInterval: RollingInterval.Day)
+                .WriteTo.File("C:/Users/PC/OneDrive/Máy tính/Demo_GitFlow/logs/app_log.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
             Log.Information("----- ỨNG DỤNG KHỞI ĐỘNG -----");
             // To customize application configuration such as set high DPI settings or default font,
