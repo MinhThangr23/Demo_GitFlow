@@ -54,40 +54,54 @@ namespace Menu_Management
                 MessageBox.Show("Please fill in all fields.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            else if (isCorrectPassword(CurrentPasswordtxt.Text))
+
+            if (!isCorrectPassword(CurrentPasswordtxt.Text))
             {
-                if (NewPasswordtxt.Text == ConfirmNewPasswordtxt.Text)
-                {
-                    using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-                    {
-                        sqlcon.Open();
-                        string q = "UPDATE Accounts SET Password = @NewPassword WHERE Username = @Username";
-                        SqlCommand sqlcmd = new SqlCommand(q, sqlcon);
-                        sqlcmd.Parameters.AddWithValue("@NewPassword", NewPasswordtxt.Text);
-                        sqlcmd.Parameters.AddWithValue("@Username", Login.User);
-                        int rowsAffected = sqlcmd.ExecuteNonQuery();
-                        if (rowsAffected == 1)
-                        {
-                            MessageBox.Show("Password changed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            Login.Password = NewPasswordtxt.Text; // Update the static password in Login class
-                            this.Close(); // Close the form after successful change
-                        }
-                        else
-                        {
-                            MessageBox.Show("Failed to change password. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("New password and confirmation do not match.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                MessageBox.Show("Current password is incorrect.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!IsMatchingNewPassword())
+            {
+                MessageBox.Show("New password and confirmation do not match.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (UpdatePasswordInDatabase())
+            {
+                MessageBox.Show("Password changed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Login.Password = NewPasswordtxt.Text;
+                this.Close();
             }
             else
             {
-                MessageBox.Show("Current password is incorrect.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to change password. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        //Kiểm tra mật khẩu mới khớp nhau
+        private bool IsMatchingNewPassword()
+        {
+            return NewPasswordtxt.Text == ConfirmNewPasswordtxt.Text;
+        }
+        //Cập nhật mật khẩu vào SQL
+        private bool UpdatePasswordInDatabase()
+        {
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+            {
+                sqlcon.Open();
+                string query = "UPDATE Accounts SET Password = @NewPassword WHERE Username = @Username";
+
+                using (SqlCommand sqlcmd = new SqlCommand(query, sqlcon))
+                {
+                    sqlcmd.Parameters.AddWithValue("@NewPassword", NewPasswordtxt.Text);
+                    sqlcmd.Parameters.AddWithValue("@Username", Login.User);
+
+                    return sqlcmd.ExecuteNonQuery() == 1;
+                }
+            }
+        }
+
 
     }
 }
