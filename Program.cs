@@ -1,5 +1,4 @@
-using log4net;
-using log4net.Config;
+﻿using Serilog;
 namespace Menu_Management
 {
     internal static class Program
@@ -7,20 +6,22 @@ namespace Menu_Management
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
-        // Khai b�o m?t logger cho Program.cs 
-        private static readonly ILog log = LogManager.GetLogger(typeof(Program));
+        // Khai báo m?t logger cho Program.cs 
         [STAThread]
         static void Main()
         {
-            // Y�u c?u Log4net ??c file config 
-            XmlConfigurator.Configure(new FileInfo("log4net.config"));
-            // Ghi m?t d�ng log test ngay khi app kh?i ??ng
-            log.Info("--- UNG DUNG BAT DAU---");
+             // Khởi tạo Serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.File("logs/app_log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+            Log.Information("----- ỨNG DỤNG KHỞI ĐỘNG -----");
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new LoginForm());
-
+            // Đóng log khi tắt app
+            Log.CloseAndFlush();
         }
     }
 }
