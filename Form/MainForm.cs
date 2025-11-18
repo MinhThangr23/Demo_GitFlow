@@ -85,17 +85,32 @@ namespace Menu_Management
             MainHelper.ShowForm(adminCheckout, MainPanel);
         }
 
+
         private void Logout_Click(object sender, EventArgs e)
+        {
+            ResetAccount();
+            ShowLoginForm();
+        }
+        //Tách phần reset tài khoản
+        private void ResetAccount()
         {
             Login.SetAccountStatus(Login.User, "Offline");
             Login.User = string.Empty;
             Login.Fullname = string.Empty;
             Login.Role = string.Empty;
             Login.Password = string.Empty;
+        }
 
+        //Tách phần mở form đăng nhập
+        private void ShowLoginForm()
+        {
             LoginForm loginForm = new LoginForm();
-            this.Hide(); // ẩn MainForm trước khi hiển thị LoginForm
+            this.Hide();
             loginForm.Show();
         }
+
+
+
+
     }
 }

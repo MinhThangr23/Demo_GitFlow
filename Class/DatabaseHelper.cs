@@ -32,7 +32,7 @@ namespace Menu_Management.Class
         internal static string GetConnectionString()
         {
             // Replace with your actual database connection string
-            return "Data Source=localhost;Initial Catalog=Restaurant_Menu;Integrated Security=True;Trust Server Certificate=True";
+            return @"Data Source=LAPTOP-R9BANE6A\MSSQLSERVER01;Initial Catalog=Restaurant_Menu;Integrated Security=True;Trust Server Certificate=True";
         }
 
 

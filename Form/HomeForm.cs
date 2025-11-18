@@ -1,4 +1,5 @@
-﻿using Menu_Management.Class;
+﻿using log4net;
+using Menu_Management.Class;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace Menu_Management
 {
     public partial class HomeForm : Form
     {
+        // Khai báo đối tượng log
+        private static readonly ILog log = LogManager.GetLogger(typeof(HomeForm));
         private BillForm billform;
         public Label CategoryLBL => Category;
 
@@ -101,35 +104,67 @@ namespace Menu_Management
         }
         private void btnOrder_Click(object sender, EventArgs e)
         {
-            int billid = OrderHelper.CurrentOrderID;
-            DateTime timestamp = DateTime.Now;
-            float total = 0;
-            try
-            {
-                total = float.Parse(OrderTotalLabel.Text);
-            }
-            catch
+            if (!TryGetOrderTotal(out float total))
             {
                 MessageBox.Show("Please add items to the order before placing it.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
+            int billid = OrderHelper.CurrentOrderID;
+            DateTime timestamp = DateTime.Now;
+
+            UC_BillItem BillItem = CreateBillItem(billid, timestamp);
+
+            (int itemnumber, float totalprice) = ProcessOrderItems(BillItem);
+
+            FinalizeBill(BillItem, itemnumber, totalprice);
+
+            SaveBill(BillItem.BillID, BillItem.OrderTime, BillItem.EmloyeeName, BillItem.ItemNumber, BillItem.totalPrice, OrderInfos);
+
+            ResetOrderUI();
+        }
+
+        // Kiểm tra và lấy tổng tiền
+        private bool TryGetOrderTotal(out float total)
+        {
+            total = 0;
+            try
+            {
+                total = float.Parse(OrderTotalLabel.Text);
+                return true;
+            }
+            catch
+            {
+                return false;// Trả về false nếu không thể phân tích tổng tiền
+            }
+        }
+
+        // Tạo BillItem và sự kiện xóa hóa đơn
+        private UC_BillItem CreateBillItem(int billid, DateTime timestamp)
+        {
             UC_BillItem BillItem = new UC_BillItem(this.billform, billid.ToString(), timestamp, Login.User, "Apending");
+
             BillItem.ClearBillItemClicked += (sender, e) =>
             {
                 if (sender is UC_BillItem clickedItem)
                 {
-                    billform.billflowpanel.Controls.Remove(clickedItem); //  đúng control đang được click
+                    billform.billflowpanel.Controls.Remove(clickedItem); // Xóa UC_BillItem khỏi billflowpanel trong BillForm
                     using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
                     {
                         sqlcon.Open();
                         string deleteBillQuery = "UPDATE Bills SET Status = 'Cancelled' WHERE BillID = @BillID";
                         SqlCommand cmd = new SqlCommand(deleteBillQuery, sqlcon);
-                        cmd.Parameters.AddWithValue("@BillID", clickedItem.BillID); // ✅ đúng BillID thực tế
+                        cmd.Parameters.AddWithValue("@BillID", clickedItem.BillID); // Sử dụng BillID từ UC_BillItem
                         cmd.ExecuteNonQuery();
                     }
                 }
             };
+            return BillItem;
+        }
+
+        // Duyệt danh sách món ăn trong OrderflowLayout
+        private (int itemnumber, float totalprice) ProcessOrderItems(UC_BillItem BillItem)
+        {
             int itemnumber = 0;
             float totalprice = 0;
             foreach (Control controlitem in OrderflowLayout.Controls)
@@ -141,6 +176,7 @@ namespace Menu_Management
                     int itemquantity = Orderitem.quantity;
                     float itemprice = Orderitem.orderPrice * itemquantity;
                     totalprice += itemprice;
+
                     OrderInfos.Add(new OrderInfoClass
                     {
                         ItemID = itemid,
@@ -152,24 +188,25 @@ namespace Menu_Management
                     itemnumber++;
                 }
             }
+            return (itemnumber, totalprice);
+        }
 
-            //Tổng giá của hóa đơn
+        // Cập nhật tổng tiền, số lượng, thêm vào giao diện
+        private void FinalizeBill(UC_BillItem BillItem, int itemnumber, float totalprice)
+        {
             BillItem.totalPrice = totalprice;
             BillItem.ItemNumber = itemnumber;
-            // Cập nhật tổng giá và số lượng món ăn trong hóa đơn (hiển thị)
-
-            BillItem.CalculateTotalPrice(); //Làm ơn đừng xóa dòng code này =)))))
-
+            BillItem.CalculateTotalPrice();
             billform.billflowpanel.Controls.Add(BillItem);
+        }
 
-            //Lưu thông tin hóa đơn vào CSDL
-            SaveBill(BillItem.BillID, BillItem.OrderTime, BillItem.EmloyeeName, BillItem.ItemNumber, BillItem.totalPrice, OrderInfos);
-
-
-            OrderflowLayout.Controls.Clear(); // Xóa các mục trong OrderflowLayout sau khi đặt hàng
+        //  Xóa đơn tạm khỏi giao diện
+        private void ResetOrderUI()
+        {
+            OrderflowLayout.Controls.Clear();
             OrderTotalLabel.Text = "";
-            OrderID.Text = ""; // Đặt lại ID đơn hàng
-            OrderHelper.CurrentOrderID = 0; // Đặt lại tổng tiền đơn hàng
+            OrderID.Text = "";
+            OrderHelper.CurrentOrderID = 0;
         }
 
         private void reload_Click(object sender, EventArgs e)

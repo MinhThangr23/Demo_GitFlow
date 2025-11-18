@@ -51,6 +51,14 @@ namespace Menu_Management
         private void BuildBillContent()
         {
             billLines = new List<string>();
+
+            AddHeader();
+            AddItems();
+            AddFooter();
+        }
+        //Tách phần Header
+        private void AddHeader()
+        {
             billLines.Add("         Sales Invoice");
             billLines.Add("-------------------------------");
             billLines.Add($"Invoice No  : {BillID}");
@@ -58,28 +66,37 @@ namespace Menu_Management
             billLines.Add($"Date & Time   : {OrderTime}");
             billLines.Add("-------------------------------");
             billLines.Add(string.Format("{0,-20} {1,5} {2,12}", "Item", "Qty", "Price"));
-
+        }
+        //Tách phần Items
+        private void AddItems()
+        {
             foreach (var item in OrderInfos)
             {
-                // Rút gọn tên món nếu quá dài để tránh bị tràn dòng
-                string itemName = item.ItemName.Length > 20
-                    ? item.ItemName.Substring(0, 17) + "..."
-                    : item.ItemName;
-
-                string line = string.Format("{0,-20} {1,5} {2,12:N0}",
-                    itemName,
-                    item.ItemQuantity,
-                    item.ItemTotalPrice);
-
-                billLines.Add(line);
+                billLines.Add(BuildItemLine(item));
             }
+        }
+        private string BuildItemLine(OrderInfoClass item)
+        {
+            string name = ShortenName(item.ItemName);
 
+            return string.Format("{0,-20} {1,5} {2,12:N0}",
+                name, item.ItemQuantity, item.ItemTotalPrice);
+        }
+        private string ShortenName(string name)
+        {
+            return name.Length > 20 ? name.Substring(0, 17) + "..." : name;
+        }
+        //Tách phần Footer
+        private void AddFooter()
+        {
             billLines.Add("-------------------------------");
             billLines.Add($"Total Items: {ItemNumber}");
             billLines.Add($"Total Amount: {totalPrice:N0} VND");
             billLines.Add("-------------------------------");
             billLines.Add("  Thank you for your support!");
         }
+
+
 
         private void printDocument_PrintPage(object sender, PrintPageEventArgs e)
         {
@@ -108,31 +125,49 @@ namespace Menu_Management
 
         private void PrintButton_Click(object sender, EventArgs e)
         {
-            BuildBillContent(); // Tạo nội dung hóa đơn
+            BuildBillContent();
 
-            // Gán tài liệu cho dialog xem trước
+            ShowPrintPreview();
+
+            if (ShowPrintDialog())
+            {
+                PrintDocumentNow();
+            }
+
+            CompleteAfterPrinting();
+        }
+        //Xem truoc khi in
+        private void ShowPrintPreview()
+        {
             previewDialog.Document = printDocument;
             previewDialog.PrintPreviewControl.Zoom = 1.3;
             previewDialog.Width = 600;
             previewDialog.Height = 800;
-
-            // Hiển thị xem trước
             previewDialog.ShowDialog();
-
-            // Sau khi preview xong → chọn máy in để in
+        }
+        //Mở dialog chọn máy in
+        private bool ShowPrintDialog()
+        {
             using (PrintDialog printDialog = new PrintDialog())
             {
                 printDialog.Document = printDocument;
-
-                if (printDialog.ShowDialog() == DialogResult.OK)
-                {
-                    printDocument.Print();
-                }
+                return printDialog.ShowDialog() == DialogResult.OK;
             }
-            this.Close(); // Đóng form sau khi in
-            FinalizeBill(); // Cập nhật trạng thái hóa đơn thành "Done" sau khi in
-            BillHelper.LoadBills(billform.billflowpanel, billform); // Tải lại danh sách hóa đơn
         }
+        //Thực hiện in
+        private void PrintDocumentNow()
+        {
+            printDocument.Print();
+        }
+        //Xử lý sau khi in (đóng form + cập nhật DB + load lại bill
+        private void CompleteAfterPrinting()
+        {
+            this.Close();
+            FinalizeBill();
+            BillHelper.LoadBills(billform.billflowpanel, billform);
+        }
+
+
 
         private void NotPrintButton_Click(object sender, EventArgs e)
         {
