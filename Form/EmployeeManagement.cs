@@ -98,8 +98,7 @@ namespace Menu_Management
                 return;
             }
 
-            if (MessageBox.Show("Are you sure to delete this account?", "Confirm Deletion", MessageBoxButtons.YesNo) == DialogResult.No)
-                return;
+            if (MessageBox.Show("Are you sure to delete this account?", "Confirm Deletion", MessageBoxButtons.YesNo) == DialogResult.No) return;
 
             var username = EmployeeViewer.SelectedRows[0].Cells["UserName"].Value.ToString();
             if (Login.isOnline(username))
@@ -107,7 +106,6 @@ namespace Menu_Management
                 MessageBox.Show("This account is currently online!!");
                 return;
             }
-
             try
             {
                 using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -115,7 +113,6 @@ namespace Menu_Management
                 var query = "DELETE FROM Accounts WHERE UserName = @username";
                 using var sqlcmd = new SqlCommand(query, sqlcon);
                 sqlcmd.Parameters.AddWithValue("@username", username);
-
                 if (sqlcmd.ExecuteNonQuery() > 0)
                 {
                     MessageBox.Show("Account deleted successfully");
