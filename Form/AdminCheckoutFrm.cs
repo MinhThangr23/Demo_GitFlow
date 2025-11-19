@@ -73,7 +73,7 @@ namespace Menu_Management
             }
 
             Report report = new Report();
-            report.Load("C:/Users/TAM/source/repos/Demo_GitFlow/Reports/ItemWiseReport.frx"); //cần thêm file
+            report.Load("C:/Code C#/DelicoiusRestaurant/Reports/ItemWiseReport.frx"); //cần thêm file
             //thêm tham số cho báo cáo
             report.SetParameterValue("FromDate", fromDate);
             report.SetParameterValue("ToDate", toDate);
