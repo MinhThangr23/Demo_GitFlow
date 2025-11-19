@@ -25,21 +25,29 @@ namespace Menu_Management
 
         private bool IsValidInput()
         {
-            return !string.IsNullOrWhiteSpace(Username.Text)
-                && !string.IsNullOrWhiteSpace(Password.Text)
-                && !string.IsNullOrWhiteSpace(Fullname.Text)
-                && GenderComboBox.SelectedItem != null
-                && RoleComboBox.SelectedItem != null;
+            return !string.IsNullOrWhiteSpace(Username.Text) &&
+                   !string.IsNullOrWhiteSpace(Password.Text) &&
+                   !string.IsNullOrWhiteSpace(Fullname.Text) &&
+                   GenderComboBox.SelectedItem != null &&
+                   RoleComboBox.SelectedItem != null;
         }
 
-        private bool IsExist(string username)
+        private bool DoesUsernameExist(string username)
         {
-            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-            sqlcon.Open();
-            var query = "SELECT COUNT(*) FROM Accounts WHERE UserName = @username";
-            using var sqlcmd = new SqlCommand(query, sqlcon);
-            sqlcmd.Parameters.AddWithValue("@username", username);
-            return (int)sqlcmd.ExecuteScalar() > 0;
+            try
+            {
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+                var query = "SELECT COUNT(*) FROM Accounts WHERE UserName = @username";
+                using var sqlcmd = new SqlCommand(query, sqlcon);
+                sqlcmd.Parameters.AddWithValue("@username", username);
+                return (int)sqlcmd.ExecuteScalar() > 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi kiểm tra username: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
         }
 
         private void AddEmployee_Click(object sender, EventArgs e)
@@ -51,48 +59,53 @@ namespace Menu_Management
             }
 
             var username = Username.Text.Trim();
-            if (IsExist(username))
+            if (DoesUsernameExist(username))
             {
                 MessageBox.Show("Username already exists. Please choose a different username.");
                 return;
             }
 
-            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-            sqlcon.Open();
-            var query = @"INSERT INTO Accounts (UserName, Password, FullName, Gender, RoleID)
-                          VALUES (@username, @password, @FullName, @Gender, 
-                          (SELECT RoleID FROM Roles WHERE RoleName= @RoleID))";
-            using var sqlcmd = new SqlCommand(query, sqlcon);
-            sqlcmd.Parameters.AddWithValue("@username", username);
-            sqlcmd.Parameters.AddWithValue("@password", Password.Text.Trim());
-            sqlcmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
-            sqlcmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
-            sqlcmd.Parameters.AddWithValue("@RoleID", RoleComboBox.SelectedItem.ToString().Trim());
+            try
+            {
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+                var query = @"INSERT INTO Accounts (UserName, Password, FullName, Gender, RoleID)
+                              VALUES (@username, @password, @FullName, @Gender,
+                              (SELECT RoleID FROM Roles WHERE RoleName = @RoleName))";
+                using var sqlcmd = new SqlCommand(query, sqlcon);
+                sqlcmd.Parameters.AddWithValue("@username", username);
+                sqlcmd.Parameters.AddWithValue("@password", Password.Text.Trim());
+                sqlcmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
+                sqlcmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
+                sqlcmd.Parameters.AddWithValue("@RoleName", RoleComboBox.SelectedItem.ToString().Trim());
 
-            if (sqlcmd.ExecuteNonQuery() > 0)
-            {
-                MessageBox.Show("Account added successfully");
-                DatabaseHelper.ShowEmployee(EmployeeViewer);
-                Username.Clear();
-                Password.Clear();
-                Fullname.Clear();
+                if (sqlcmd.ExecuteNonQuery() > 0)
+                {
+                    MessageBox.Show("Account added successfully");
+                    DatabaseHelper.ShowEmployee(EmployeeViewer);
+                    ClearInputFields();
+                }
+                else
+                {
+                    MessageBox.Show("Fail to add account");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Fail to add account");
+                MessageBox.Show($"Lỗi khi thêm tài khoản: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void DelelteEmployee_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure to delete this account?", "Confirm Deletion", MessageBoxButtons.YesNo) == DialogResult.No)
-                return;
-
-            if (EmployeeViewer.SelectedRows.Count == 0 || EmployeeViewer.SelectedRows[0].Cells[0].Value == null)
+            if (EmployeeViewer.SelectedRows.Count == 0 || EmployeeViewer.SelectedRows[0].Cells["UserName"].Value == null)
             {
                 MessageBox.Show("Please select an account to delete.");
                 return;
             }
+
+            if (MessageBox.Show("Are you sure to delete this account?", "Confirm Deletion", MessageBoxButtons.YesNo) == DialogResult.No)
+                return;
 
             var username = EmployeeViewer.SelectedRows[0].Cells["UserName"].Value.ToString();
             if (Login.isOnline(username))
@@ -101,20 +114,27 @@ namespace Menu_Management
                 return;
             }
 
-            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-            sqlcon.Open();
-            var query = "DELETE FROM Accounts WHERE UserName = @username";
-            using var sqlcmd = new SqlCommand(query, sqlcon);
-            sqlcmd.Parameters.AddWithValue("@username", username);
+            try
+            {
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+                var query = "DELETE FROM Accounts WHERE UserName = @username";
+                using var sqlcmd = new SqlCommand(query, sqlcon);
+                sqlcmd.Parameters.AddWithValue("@username", username);
 
-            if (sqlcmd.ExecuteNonQuery() > 0)
-            {
-                MessageBox.Show("Account deleted successfully");
-                DatabaseHelper.ShowEmployee(EmployeeViewer);
+                if (sqlcmd.ExecuteNonQuery() > 0)
+                {
+                    MessageBox.Show("Account deleted successfully");
+                    DatabaseHelper.ShowEmployee(EmployeeViewer);
+                }
+                else
+                {
+                    MessageBox.Show("Fail to delete account");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Fail to delete account");
+                MessageBox.Show($"Lỗi khi xóa tài khoản: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -122,7 +142,6 @@ namespace Menu_Management
         {
             CurrentEmployeeFlowPanel.Controls.Clear();
             UC_UserItem user;
-
             if (EmployeeViewer.SelectedRows.Count == 0)
             {
                 DeleteEmployee.Enabled = false;
@@ -131,12 +150,12 @@ namespace Menu_Management
             else
             {
                 DeleteEmployee.Enabled = true;
-                var selectedrow = EmployeeViewer.SelectedRows[0];
+                var selectedRow = EmployeeViewer.SelectedRows[0];
                 user = new UC_UserItem(
-                    selectedrow.Cells["UserName"].Value?.ToString(),
-                    selectedrow.Cells["FullName"].Value?.ToString(),
-                    selectedrow.Cells["Gender"].Value?.ToString(),
-                    selectedrow.Cells["RoleName"].Value?.ToString()
+                    selectedRow.Cells["UserName"].Value?.ToString() ?? string.Empty,
+                    selectedRow.Cells["FullName"].Value?.ToString() ?? string.Empty,
+                    selectedRow.Cells["Gender"].Value?.ToString() ?? string.Empty,
+                    selectedRow.Cells["RoleName"].Value?.ToString() ?? string.Empty
                 );
             }
             CurrentEmployeeFlowPanel.Controls.Add(user);
@@ -150,20 +169,37 @@ namespace Menu_Management
                 MessageBoxButtons.YesNo) == DialogResult.No)
                 return;
 
-            using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-            sqlcon.Open();
-            var query = "DELETE FROM Accounts WHERE RoleID = (SELECT RoleID FROM Roles WHERE RoleName = 'Employee') AND Status = 'Offline'";
-            using var sqlcmd = new SqlCommand(query, sqlcon);
+            try
+            {
+                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
+                sqlcon.Open();
+                var query = "DELETE FROM Accounts WHERE RoleID = (SELECT RoleID FROM Roles WHERE RoleName = 'Employee') AND Status = 'Offline'";
+                using var sqlcmd = new SqlCommand(query, sqlcon);
 
-            if (sqlcmd.ExecuteNonQuery() > 0)
-            {
-                MessageBox.Show("Accounts deleted successfully");
-                DatabaseHelper.ShowEmployee(EmployeeViewer);
+                int rowsAffected = sqlcmd.ExecuteNonQuery();
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("Accounts deleted successfully");
+                    DatabaseHelper.ShowEmployee(EmployeeViewer);
+                }
+                else
+                {
+                    MessageBox.Show("Fail to delete all or no accounts to delete");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Fail to delete all");
+                MessageBox.Show($"Lỗi khi xóa tất cả tài khoản: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void ClearInputFields()
+        {
+            Username.Clear();
+            Password.Clear();
+            Fullname.Clear();
+            GenderComboBox.SelectedIndex = -1;
+            RoleComboBox.SelectedIndex = -1;
         }
     }
 }
