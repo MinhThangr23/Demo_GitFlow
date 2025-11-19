@@ -29,9 +29,7 @@ namespace Menu_Management.Class
                     sqlcon.Open();
                     Log.Information("Đã mở kết nối SQL thành công"); // Log mức Information khi kết nối thành công
 
-                    SqlCommand sqlcmd = new SqlCommand(
-                        "SELECT CategoryName FROM Categories WHERE CategoryID = @CategoryID",
-                        sqlcon);
+                    SqlCommand sqlcmd = new SqlCommand("SELECT CategoryName FROM Categories WHERE CategoryID = @CategoryID",sqlcon);
 
                     sqlcmd.Parameters.AddWithValue("@CategoryID", categoryID);
 
