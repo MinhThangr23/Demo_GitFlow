@@ -22,7 +22,6 @@ namespace Menu_Management
             DatabaseHelper.LoadRoles(RoleComboBox);
             DatabaseHelper.ShowEmployee(EmployeeViewer);
         }
-
         private bool IsValidInput()
         {
             return !string.IsNullOrWhiteSpace(Username.Text) &&
@@ -31,7 +30,6 @@ namespace Menu_Management
                    GenderComboBox.SelectedItem != null &&
                    RoleComboBox.SelectedItem != null;
         }
-
         private bool DoesUsernameExist(string username)
         {
             try
@@ -49,7 +47,6 @@ namespace Menu_Management
                 return false;
             }
         }
-
         private void AddEmployee_Click(object sender, EventArgs e)
         {
             if (!IsValidInput())
@@ -57,14 +54,12 @@ namespace Menu_Management
                 MessageBox.Show("Please fill in all fields.");
                 return;
             }
-
             var username = Username.Text.Trim();
             if (DoesUsernameExist(username))
             {
                 MessageBox.Show("Username already exists. Please choose a different username.");
                 return;
             }
-
             try
             {
                 using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -78,7 +73,6 @@ namespace Menu_Management
                 sqlcmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
                 sqlcmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
                 sqlcmd.Parameters.AddWithValue("@RoleName", RoleComboBox.SelectedItem.ToString().Trim());
-
                 if (sqlcmd.ExecuteNonQuery() > 0)
                 {
                     MessageBox.Show("Account added successfully");
