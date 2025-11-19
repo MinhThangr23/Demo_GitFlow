@@ -1,5 +1,4 @@
-﻿using log4net;
-using Menu_Management.Class;
+﻿using Menu_Management.Class;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -10,13 +9,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Serilog;
 
 namespace Menu_Management
 {
     public partial class HomeForm : Form
     {
         // Khai báo đối tượng log
-        private static readonly ILog log = LogManager.GetLogger(typeof(HomeForm));
+        private static readonly ILogger log = Log.ForContext<HomeForm>();
         private BillForm billform;
         public Label CategoryLBL => Category;
 
@@ -54,15 +54,24 @@ namespace Menu_Management
         //Hàm thêm bIll và lưu thông tin hóa đơn vào CSDL
         private void SaveBill(string BillID, DateTime OrderTime, string EmployeeName, int ItemNumber, float totalPrice, List<OrderInfoClass> OrderInfos)
         {
+            log.Information("[SaveBill] Bắt đầu lưu hóa đơn. BillID={BillID}, ItemNumber={ItemNumber}, Total={Total}", BillID, ItemNumber, totalPrice);
+
+            // Kiểm tra đầu vào
+            if (OrderInfos == null || OrderInfos.Count == 0)
+            {
+                log.Warning("Không có món ăn nào trong OrderInfos. Không thể lưu hóa đơn.");
+                throw new Exception("Bill must contain at least 1 item.");
+            }
             using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
             {
                 sqlcon.Open();
-
+                log.Information("Kết nối SQL thành công.");
                 // Bắt đầu giao dịch vì căn bản 2 lệnh này phải xảy ra đồng thời
                 using (SqlTransaction transaction = sqlcon.BeginTransaction())
                 {
                     try
                     {
+                        log.Debug("Bắt đầu transaction cho Bill và BillDetails.");
                         // Lưu bảng Bills
                         string billQuery = @"INSERT INTO Bills (BillID, OrderTime, EmployeeName, TotalItem, TotalPrice, Status)
                                      VALUES (@BillID, @OrderTime, @EmployeeName, @ItemNumber, @TotalPrice, 'Appending')";
@@ -74,6 +83,7 @@ namespace Menu_Management
                             cmdBill.Parameters.AddWithValue("@ItemNumber", ItemNumber);
                             cmdBill.Parameters.AddWithValue("@TotalPrice", totalPrice);
                             cmdBill.ExecuteNonQuery();
+                            log.Information("Lưu bảng Bills thành công.");
                         }
 
                         // Lưu từng món vào bảng BillDetails
@@ -88,16 +98,29 @@ namespace Menu_Management
                                 cmdDetail.Parameters.AddWithValue("@Quantity", item.ItemQuantity);
                                 cmdDetail.Parameters.AddWithValue("@UnitPrice", item.ItemTotalPrice);
                                 cmdDetail.ExecuteNonQuery();
+                                log.Debug($"Đã lưu món: {item.ItemName}, SL={item.ItemQuantity}, Giá={item.ItemTotalPrice}");
                             }
                         }
                         //chạy xong 2 lệnh INSERT thì commit giao dịch
                         transaction.Commit();
+                        log.Information($"Lưu hóa đơn hoàn tất thành công cho BillID={BillID}");
+                    }
+                    catch (SqlException ex)
+                    {
+                        transaction.Rollback();
+                        Log.Error(ex, "Lỗi SQL khi lưu hóa đơn. Đã rollback transaction.");
+                        throw; // ném tiếp lên cho chỗ gọi xử lý
                     }
                     catch (Exception ex)
                     {
-                        //nếu xả ra lỗi thì rollback giao dịch
                         transaction.Rollback();
-                        MessageBox.Show("Lỗi khi lưu hóa đơn: " + ex.Message);
+                        Log.Fatal(ex, "Lỗi nghiêm trọng khi lưu hóa đơn. Đã rollback transaction.");
+                        throw;
+                    }
+                    finally
+                    {
+                        Log.Debug("Kết thúc SaveBill()");
+                        Log.Debug("--------------------------------------");
                     }
                 }
             }
