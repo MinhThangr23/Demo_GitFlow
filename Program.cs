@@ -12,7 +12,7 @@ namespace Menu_Management
         {
              // Khởi tạo Serilog
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+                .MinimumLevel.Verbose() // Thiết lập mức log tối thiểu là Verbose để ghi lại tất cả các mức log
                 .WriteTo.File("C:/Users/PC/OneDrive/Máy tính/Demo_GitFlow/logs/app_log.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
             Log.Information("----- ỨNG DỤNG KHỞI ĐỘNG -----");
