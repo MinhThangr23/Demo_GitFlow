@@ -137,13 +137,14 @@ namespace Menu_Management
             CompleteAfterPrinting();
         }
         //Xem truoc khi in
-        private void ShowPrintPreview()
+        private void ShowPrintPreview() // Hiển thị hộp thoại xem trước in
         {
             previewDialog.Document = printDocument;
             previewDialog.PrintPreviewControl.Zoom = 1.3;
-            previewDialog.Width = 600;
-            previewDialog.Height = 800;
-            previewDialog.ShowDialog();
+            previewDialog.Width = 600; // Thiết lập kích thước hộp thoại xem trước in
+            previewDialog.Height = 800; // Thiết lập kích thước hộp thoại xem trước in
+            previewDialog.ShowDialog(); // Hiển thị hộp thoại xem trước in
+            previewDialog.ShowDialog(); // Hiển thị hộp thoại xem trước in
         }
         //Mở dialog chọn máy in
         private bool ShowPrintDialog()
