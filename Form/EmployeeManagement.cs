@@ -39,7 +39,7 @@ namespace Menu_Management
         }
         #endregion
         #region Kiểm tra username tồn tại
-        private bool DoesUsernameExist(string username)
+        private bool DoesUsernameExist(string username) // Trả về true nếu username đã tồn tại
         {
             try
             {
