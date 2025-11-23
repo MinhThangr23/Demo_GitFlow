@@ -121,46 +121,59 @@ namespace Menu_Management
                 ClearInputFields();
             }
         }
-
+        #endregion
+        #region Xóa nhân viên
         private void DelelteEmployee_Click(object sender, EventArgs e)
         {
             if (EmployeeViewer.SelectedRows.Count == 0 || EmployeeViewer.SelectedRows[0].Cells["UserName"].Value == null)
             {
-                MessageBox.Show("Please select an account to delete.");
-                return;
+                MessageBox.Show("Vui lòng chọn tài khoản cần xóa.", "Chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
 
-            if (MessageBox.Show("Are you sure to delete this account?", "Confirm Deletion", MessageBoxButtons.YesNo) == DialogResult.No) return;
-
-            var username = EmployeeViewer.SelectedRows[0].Cells["UserName"].Value.ToString();
+            if (MessageBox.Show
+                ("Bạn có chắc chắn muốn xóa tài khoản này?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return; // Người dùng hủy xóa
+            string username = EmployeeViewer.SelectedRows[0].Cells["UserName"].Value.ToString();
             if (Login.isOnline(username))
             {
-                MessageBox.Show("This account is currently online!!");
-                return;
+                MessageBox.Show("Tài khoản này đang online, không thể xóa!", "Không thể xóa", MessageBoxButtons.OK, MessageBoxIcon.Stop); return;
             }
             try
             {
-                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-                sqlcon.Open();
-                var query = "DELETE FROM Accounts WHERE UserName = @username";
-                using var sqlcmd = new SqlCommand(query, sqlcon);
-                sqlcmd.Parameters.AddWithValue("@username", username);
-                if (sqlcmd.ExecuteNonQuery() > 0)
+                using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
+                con.Open();
+                using var cmd = new SqlCommand("DELETE FROM Accounts WHERE UserName = @username", con);
+                cmd.Parameters.AddWithValue("@username", username);
+                int rows = cmd.ExecuteNonQuery();
+                if (rows > 0)
                 {
-                    MessageBox.Show("Account deleted successfully");
-                    DatabaseHelper.ShowEmployee(EmployeeViewer);
+                    MessageBox.Show("Xóa tài khoản thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                else
+                else // rows == 0
                 {
-                    MessageBox.Show("Fail to delete account");
-                }
+                    MessageBox.Show("Không tìm thấy tài khoản để xóa.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }    
+            }
+            catch (SqlException sqlEx) when (sqlEx.Number == 547) // FK constraint
+            {
+                MessageBox.Show("Không thể xóa tài khoản vì đang có dữ liệu liên quan (ví dụ: hóa đơn).", "Lỗi ràng buộc", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                throw; // Rethrow để xử lý thêm nếu cần
+            }
+            catch (SqlException sqlEx)
+            {
+                MessageBox.Show($"Lỗi cơ sở dữ liệu khi xóa: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow để xử lý thêm nếu cần
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xóa tài khoản: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi không xác định: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow để xử lý thêm nếu cần
+            }
+            finally
+            {
+                DatabaseHelper.ShowEmployee(EmployeeViewer); // Cập nhật lại danh sách nhân viên
             }
         }
-
         private void EmployeeViewer_SelectionChanged(object sender, EventArgs e)
         {
             CurrentEmployeeFlowPanel.Controls.Clear();
