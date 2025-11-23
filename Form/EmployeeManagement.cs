@@ -22,31 +22,43 @@ namespace Menu_Management
             DatabaseHelper.LoadRoles(RoleComboBox);
             DatabaseHelper.ShowEmployee(EmployeeViewer);
         }
-        private bool IsValidInput()
+        #region Kiểm tra đầu vào - Guard Clause + Throw
+        private void ValidateInputOrThrow()
         {
-            return !string.IsNullOrWhiteSpace(Username.Text) &&
-                   !string.IsNullOrWhiteSpace(Password.Text) &&
-                   !string.IsNullOrWhiteSpace(Fullname.Text) &&
-                   GenderComboBox.SelectedItem != null &&
-                   RoleComboBox.SelectedItem != null;
+            if (string.IsNullOrWhiteSpace(Username.Text))
+                throw new ArgumentException("Vui lòng nhập tên đăng nhập.");
+
+            if (string.IsNullOrWhiteSpace(Password.Text))
+                throw new ArgumentException("Vui lòng nhập mật khẩu.");
+
+            if (string.IsNullOrWhiteSpace(Fullname.Text))
+                throw new ArgumentException("Vui lòng nhập họ tên.");
+
+            if (GenderComboBox.SelectedItem == null)
+                throw new ArgumentException("Vui lòng chọn giới tính.");
+
+            if (RoleComboBox.SelectedItem == null)
+                throw new ArgumentException("Vui lòng chọn vai trò.");
         }
+        #endregion
+        #region Kiểm tra username tồn tại
         private bool DoesUsernameExist(string username)
         {
             try
             {
-                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-                sqlcon.Open();
-                var query = "SELECT COUNT(*) FROM Accounts WHERE UserName = @username";
-                using var sqlcmd = new SqlCommand(query, sqlcon);
-                sqlcmd.Parameters.AddWithValue("@username", username);
-                return (int)sqlcmd.ExecuteScalar() > 0;
+                using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
+                con.Open();
+                using var cmd = new SqlCommand("SELECT COUNT(*) FROM Accounts WHERE UserName = @username", con);
+                cmd.Parameters.AddWithValue("@username", username);
+                return (int)cmd.ExecuteScalar() > 0; // Trả về true nếu username tồn tại
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi kiểm tra username: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                MessageBox.Show($"Lỗi khi kiểm tra tên đăng nhập: {ex.Message}", "Lỗi Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false; // Giả định username không tồn tại trong trường hợp lỗi
             }
         }
+        #endregion
         private void AddEmployee_Click(object sender, EventArgs e)
         {
             if (!IsValidInput())
