@@ -59,46 +59,66 @@ namespace Menu_Management
             }
         }
         #endregion
+        #region Thêm nhân viên
         private void AddEmployee_Click(object sender, EventArgs e)
         {
-            if (!IsValidInput())
+            try
             {
-                MessageBox.Show("Please fill in all fields.");
-                return;
+                ValidateInputOrThrow(); // Kiểm tra đầu vào
             }
-            var username = Username.Text.Trim();
+            catch (ArgumentException aex)
+            {
+                MessageBox.Show(aex.Message, "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
+            }
+            string username = Username.Text.Trim();
+
             if (DoesUsernameExist(username))
             {
-                MessageBox.Show("Username already exists. Please choose a different username.");
-                return;
+                MessageBox.Show("Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.", "Trùng lặp", MessageBoxButtons.OK, MessageBoxIcon.Warning); return;
             }
             try
             {
-                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-                sqlcon.Open();
-                var query = @"INSERT INTO Accounts (UserName, Password, FullName, Gender, RoleID)
-                              VALUES (@username, @password, @FullName, @Gender,
-                              (SELECT RoleID FROM Roles WHERE RoleName = @RoleName))";
-                using var sqlcmd = new SqlCommand(query, sqlcon);
-                sqlcmd.Parameters.AddWithValue("@username", username);
-                sqlcmd.Parameters.AddWithValue("@password", Password.Text.Trim());
-                sqlcmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
-                sqlcmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
-                sqlcmd.Parameters.AddWithValue("@RoleName", RoleComboBox.SelectedItem.ToString().Trim());
-                if (sqlcmd.ExecuteNonQuery() > 0)
+                using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
+                con.Open();
+                const string sql = @"
+                    INSERT INTO Accounts (UserName, Password, FullName, Gender, RoleID)
+                    VALUES (@username, @password, @FullName, @Gender,
+                            (SELECT RoleID FROM Roles WHERE RoleName = @RoleName))";
+                using var cmd = new SqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@username", username);
+                cmd.Parameters.AddWithValue("@password", Password.Text.Trim());
+                cmd.Parameters.AddWithValue("@FullName", Fullname.Text.Trim());
+                cmd.Parameters.AddWithValue("@Gender", GenderComboBox.SelectedItem.ToString().Trim());
+                cmd.Parameters.AddWithValue("@RoleName", RoleComboBox.SelectedItem.ToString().Trim());
+                int rows = cmd.ExecuteNonQuery(); // Thực thi lệnh và lấy số hàng bị ảnh hưởng
+                if (rows > 0)
                 {
-                    MessageBox.Show("Account added successfully");
-                    DatabaseHelper.ShowEmployee(EmployeeViewer);
-                    ClearInputFields();
+                    MessageBox.Show("Thêm tài khoản thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("Fail to add account");
-                }
+                    MessageBox.Show("Không thể thêm tài khoản.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }    
+            }
+            catch (SqlException sqlEx) when (sqlEx.Number == 2627 || sqlEx.Number == 2601) // Trùng khóa chính
+            {
+                MessageBox.Show("Tên đăng nhập đã tồn tại (lỗi cơ sở dữ liệu).", "Trùng lặp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                throw; // Rethrow để xử lý thêm nếu cần
+            }
+            catch (SqlException sqlEx)
+            {
+                MessageBox.Show($"Lỗi cơ sở dữ liệu khi thêm tài khoản: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow để xử lý thêm nếu cần
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi thêm tài khoản: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi không xác định: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow để xử lý thêm nếu cần
+            }
+            finally
+            {
+                DatabaseHelper.ShowEmployee(EmployeeViewer);
+                ClearInputFields();
             }
         }
 
