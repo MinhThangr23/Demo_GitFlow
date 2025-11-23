@@ -174,61 +174,71 @@ namespace Menu_Management
                 DatabaseHelper.ShowEmployee(EmployeeViewer); // Cập nhật lại danh sách nhân viên
             }
         }
-        private void EmployeeViewer_SelectionChanged(object sender, EventArgs e)
-        {
-            CurrentEmployeeFlowPanel.Controls.Clear();
-            UC_UserItem user;
-            if (EmployeeViewer.SelectedRows.Count == 0)
-            {
-                DeleteEmployee.Enabled = false;
-                user = new UC_UserItem();
-            }
-            else
-            {
-                DeleteEmployee.Enabled = true;
-                var selectedRow = EmployeeViewer.SelectedRows[0];
-                user = new UC_UserItem(
-                    selectedRow.Cells["UserName"].Value?.ToString() ?? string.Empty,
-                    selectedRow.Cells["FullName"].Value?.ToString() ?? string.Empty,
-                    selectedRow.Cells["Gender"].Value?.ToString() ?? string.Empty,
-                    selectedRow.Cells["RoleName"].Value?.ToString() ?? string.Empty
-                );
-            }
-            CurrentEmployeeFlowPanel.Controls.Add(user);
-        }
-
+        #endregion
+        #region Xóa tất cả nhân viên (trừ admin)
         private void DeleteAllEmployee_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show(
-                "This gonna delete all of the employees'accounts exclude admins\nThink twice before decide",
-                "Confirm All Deletion",
-                MessageBoxButtons.YesNo) == DialogResult.No)
-                return;
-
+                "Cảnh báo: Hành động này sẽ xóa TẤT CẢ tài khoản nhân viên (trừ admin) đang offline.\nBạn có chắc chắn muốn tiếp tục?",
+                "Xác nhận xóa hàng loạt", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                return; // Người dùng hủy xóa
             try
             {
-                using var sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString());
-                sqlcon.Open();
-                var query = "DELETE FROM Accounts WHERE RoleID = (SELECT RoleID FROM Roles WHERE RoleName = 'Employee') AND Status = 'Offline'";
-                using var sqlcmd = new SqlCommand(query, sqlcon);
-
-                int rowsAffected = sqlcmd.ExecuteNonQuery();
-                if (rowsAffected > 0)
+                using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
+                con.Open();
+                const string sql = @"
+                    DELETE FROM Accounts 
+                    WHERE RoleID = (SELECT RoleID FROM Roles WHERE RoleName = 'Employee') 
+                      AND Status = 'Offline'";
+                using var cmd = new SqlCommand(sql, con);
+                int rows = cmd.ExecuteNonQuery();
+                if (rows > 0)
                 {
-                    MessageBox.Show("Accounts deleted successfully");
-                    DatabaseHelper.ShowEmployee(EmployeeViewer);
+                    MessageBox.Show("Xóa tất cả tài khoản nhân viên thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                else
+                else // rows == 0
                 {
-                    MessageBox.Show("Fail to delete all or no accounts to delete");
+                    MessageBox.Show("Không có tài khoản nhân viên nào để xóa.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+            catch (SqlException sqlEx)
+            {
+                MessageBox.Show($"Lỗi cơ sở dữ liệu khi xóa hàng loạt: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow để xử lý thêm nếu cần
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xóa tất cả tài khoản: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi không xác định: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw; // Rethrow để xử lý thêm nếu cần
+            }
+            finally
+            {
+                DatabaseHelper.ShowEmployee(EmployeeViewer); // Cập nhật lại danh sách nhân viên
             }
         }
-
+        #endregion
+        #region Hiển thị thông tin khi chọn dòng
+        private void EmployeeViewer_SelectionChanged(object sender, EventArgs e)
+        {
+            CurrentEmployeeFlowPanel.Controls.Clear();
+            if (EmployeeViewer.SelectedRows.Count == 0) // Không có dòng nào được chọn
+            {
+                DeleteEmployee.Enabled = false;
+                CurrentEmployeeFlowPanel.Controls.Add(new UC_UserItem());
+                return;
+            }
+            DeleteEmployee.Enabled = true;
+            var row = EmployeeViewer.SelectedRows[0];
+            var userItem = new UC_UserItem(
+                row.Cells["UserName"].Value?.ToString() ?? string.Empty,
+                row.Cells["FullName"].Value?.ToString() ?? string.Empty,
+                row.Cells["Gender"].Value?.ToString() ?? string.Empty,
+                row.Cells["RoleName"].Value?.ToString() ?? string.Empty
+            );
+            CurrentEmployeeFlowPanel.Controls.Add(userItem);
+        }
+        #endregion
+        #region Xóa dữ liệu nhập
         private void ClearInputFields()
         {
             Username.Clear();
@@ -237,5 +247,7 @@ namespace Menu_Management
             GenderComboBox.SelectedIndex = -1;
             RoleComboBox.SelectedIndex = -1;
         }
+        #endregion
     }
+}    }
 }
