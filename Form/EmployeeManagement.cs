@@ -20,7 +20,7 @@ namespace Menu_Management
             DatabaseHelper.ShowEmployee(EmployeeViewer);
         }
         #region Kiểm tra đầu vào - Guard Clause + Throw
-        private void ValidateInputOrThrow()
+        private void ValidateInputOrThrow() 
         {
             if (string.IsNullOrWhiteSpace(Username.Text))
                 throw new ArgumentException("Vui lòng nhập tên đăng nhập.");
