@@ -16,13 +16,11 @@ namespace Menu_Management
     public partial class AlertPrintForm : Form
     {
         BillForm billform;
-
         // Biến để hỗ trợ in hóa đơn
         private PrintDocument printDocument = new PrintDocument();
         private PrintPreviewDialog previewDialog = new PrintPreviewDialog();
         private int currentLine = 0;
         private List<string> billLines;
-
         // Thông tin hóa đơn
         public string BillStatus;
         public string BillID;
@@ -30,11 +28,11 @@ namespace Menu_Management
         public string EmployeeName;
         public int ItemNumber;
         public float totalPrice;
-        public List<OrderInfoClass> OrderInfos;
+        public List<OrderInfoClass> OrderInfos; // Danh sách thông tin các món đã đặt
 
         public AlertPrintForm(BillForm billform,string BillID, DateTime OrderTime, string EmployeeName, int ItemNumber, float totalPrice, List<OrderInfoClass> OrderInfos)
         {
-            InitializeComponent();
+            InitializeComponent(); // Khởi tạo các thành phần giao diện
             this.billform = billform;
             this.BillID = BillID;
             this.OrderTime = OrderTime;
@@ -42,19 +40,16 @@ namespace Menu_Management
             this.ItemNumber = ItemNumber;
             this.totalPrice = totalPrice;
             this.OrderInfos = OrderInfos;
-
-
             // Gắn sự kiện in 1 lần
             printDocument.PrintPage += new PrintPageEventHandler(printDocument_PrintPage);
         }
-
         private void BuildBillContent()
         {
             billLines = new List<string>();
 
-            AddHeader();
-            AddItems();
-            AddFooter();
+            AddHeader(); //Tách phần Header
+            AddItems(); //Tách phần Items
+            AddFooter(); //Tách phần Footer
         }
         //Tách phần Header
         private void AddHeader()
@@ -95,8 +90,6 @@ namespace Menu_Management
             billLines.Add("-------------------------------");
             billLines.Add("  Thank you for your support!");
         }
-
-
 
         private void printDocument_PrintPage(object sender, PrintPageEventArgs e)
         {
@@ -188,4 +181,7 @@ namespace Menu_Management
             }    
         }
     }
+}
+{
+
 }
