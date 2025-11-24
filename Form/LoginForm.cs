@@ -163,8 +163,8 @@ namespace Menu_Management
                 Log.Fatal(ex, "Không thể mở MainForm.");
                 throw;
             }
-        }
 
+        }
 
     }
 }

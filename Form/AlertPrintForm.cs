@@ -182,6 +182,4 @@ namespace Menu_Management
         }
     }
 }
-{
 
-}
