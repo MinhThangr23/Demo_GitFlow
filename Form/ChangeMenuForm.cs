@@ -1,14 +1,17 @@
-﻿using log4net;
+﻿using Serilog;
 using Menu_Management.Class;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
 
 namespace Menu_Management
 {
     public partial class ChangeMenuForm : Form
     {
         private readonly Panel mainPanel;
-        private static readonly Logger Log = LogManager.GetCurrentClassLogger(); // NLog logger
 
         public ChangeMenuForm(Panel mainPanel)
         {
@@ -18,7 +21,7 @@ namespace Menu_Management
         #region Load dữ liệu
         private void ChangeMenuForm_Load(object sender, EventArgs e)
         {
-            Log.Info("Mở form ChangeMenuForm - Bắt đầu tải dữ liệu.");
+            Log.Information("Mở form ChangeMenuForm - Bắt đầu tải dữ liệu.");
             LoadCategories();
             LoadDishes();
         }
@@ -126,7 +129,7 @@ namespace Menu_Management
         #region Thêm món ăn
         private void AddBtn_Click(object sender, EventArgs e)
         {
-            Log.Info("Người dùng nhấn nút Thêm món ăn.");
+            Log.Information("Người dùng nhấn nút Thêm món ăn.");
             try
             {
                 ValidateInputOrThrow(requireImage: true);
@@ -154,7 +157,7 @@ namespace Menu_Management
                 int rows = cmd.ExecuteNonQuery();
                 if (rows > 0)
                 {
-                    Log.Info("Thêm món ăn thành công: {DishID} - {DishName}", DishIdTxt.Text.Trim(), NameTxt.Text.Trim());
+                    Log.Information("Thêm món ăn thành công: {DishID} - {DishName}", DishIdTxt.Text.Trim(), NameTxt.Text.Trim());
                     MessageBox.Show("Thêm món ăn thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
@@ -182,7 +185,7 @@ namespace Menu_Management
         #region Cập nhật món ăn
         private void AlterBtn_Click(object sender, EventArgs e)
         {
-            Log.Info("Người dùng nhấn nút Cập nhật món ăn.");
+            Log.Information("Người dùng nhấn nút Cập nhật món ăn.");
             try
             {
                 ValidateInputOrThrow(requireImage: false);
@@ -221,7 +224,7 @@ namespace Menu_Management
                 int rows = cmd.ExecuteNonQuery();
                 if (rows > 0)
                 {
-                    Log.Info("Cập nhật món ăn thành công: {DishID}", dishId);
+                    Log.Information("Cập nhật món ăn thành công: {DishID}", dishId);
                     MessageBox.Show("Cập nhật thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
@@ -244,7 +247,7 @@ namespace Menu_Management
         #region Xóa món ăn (soft delete)
         private void RemoveBtn_Click(object sender, EventArgs e)
         {
-            Log.Info("Người dùng nhấn nút Xóa món ăn.");
+            Log.Information("Người dùng nhấn nút Xóa món ăn.");
 
             if (ShowData.CurrentRow == null || ShowData.CurrentRow.Cells["DishID"].Value == null)
             {
@@ -262,7 +265,7 @@ namespace Menu_Management
                 int rows = cmd.ExecuteNonQuery();
                 if (rows > 0)
                 {
-                    Log.Info("Xóa mềm món ăn thành công: {DishID}", dishId);
+                    Log.Information("Xóa mềm món ăn thành công: {DishID}", dishId);
                     MessageBox.Show("Xóa thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
