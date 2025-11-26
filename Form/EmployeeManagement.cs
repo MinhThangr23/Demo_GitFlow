@@ -10,7 +10,6 @@ namespace Menu_Management
 {
     public partial class DeleteEmployeeButton : Form
     {
-        private static readonly ILogger Log = Serilog.Log.ForContext<DeleteEmployeeButton>();
         public DeleteEmployeeButton()
         {
             InitializeComponent();
