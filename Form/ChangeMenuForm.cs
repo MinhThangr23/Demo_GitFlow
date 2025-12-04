@@ -286,6 +286,55 @@ namespace Menu_Management
                 MessageBox.Show($"Lỗi cơ sở dữ liệu: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
+                    sqlcon.Open();
+
+                    SqlCommand deleteCmd = new SqlCommand(
+                        "UPDATE Dishes SET IsDeleted = 1 WHERE DishID = @DishID", sqlcon);
+
+                    DataGridViewRow selectedRow = ShowData.CurrentRow;
+
+                    if (selectedRow == null || selectedRow.Cells["DishID"].Value == null)
+                    {
+                        MessageBox.Show("Vui lòng chọn món ăn cần xóa.");
+                        return;
+                    }
+                    string dishId = selectedRow.Cells["DishID"].Value.ToString();
+                    deleteCmd.Parameters.AddWithValue("@DishID", dishId);
+
+                    int rows = deleteCmd.ExecuteNonQuery();
+
+                    if (rows > 0)
+                        MessageBox.Show("Xóa thành công!");
+                    else
+                        MessageBox.Show("Không tìm thấy món ăn cần xóa.");
+                }
+            }
+            catch (SqlException ex)
+            {
+                // Ví dụ: lỗi ràng buộc FK => món đang nằm trong hóa đơn chưa thanh toán
+                MessageBox.Show("Không thể xóa vì món đang có trong đơn chưa thanh toán!");
+
+                // ném lại lỗi để lớp ngoài (hoặc log) xử lý tiếp
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Lỗi khác
+                MessageBox.Show("Đã xảy ra lỗi: " + ex.Message);
+                throw;
+            }
+            finally
+            {
+                // Dù lỗi hay không đều phải load lại dữ liệu
+                LoadDishes();
+            }
+        }
+
+
+        private void ChangeMenuForm_Load(object sender, EventArgs e)
+        {
+
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
             {
                 LoadDishes();
             }
