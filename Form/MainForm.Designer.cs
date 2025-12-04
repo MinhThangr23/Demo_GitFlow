@@ -98,25 +98,27 @@ namespace Menu_Management
             SidePanel.Location = new Point(0, 0);
             SidePanel.Name = "SidePanel";
             SidePanel.ShadowDecoration.CustomizableEdges = customizableEdges18;
-            SidePanel.Size = new Size(276, 775);
+            SidePanel.Size = new Size(276, 1100);
             SidePanel.TabIndex = 0;
             // 
             // CurrentUser
             // 
+            CurrentUser.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             CurrentUser.AutoSize = true;
             CurrentUser.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            CurrentUser.Location = new Point(106, 678);
+            CurrentUser.Location = new Point(106, 1003);
             CurrentUser.Name = "CurrentUser";
-            CurrentUser.Size = new Size(69, 17);
+            CurrentUser.Size = new Size(87, 23);
             CurrentUser.TabIndex = 3;
             CurrentUser.Text = "Username";
             // 
             // guna2PictureBox2
             // 
+            guna2PictureBox2.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             guna2PictureBox2.CustomizableEdges = customizableEdges3;
             guna2PictureBox2.Image = (Image)resources.GetObject("guna2PictureBox2.Image");
             guna2PictureBox2.ImageRotate = 0F;
-            guna2PictureBox2.Location = new Point(47, 659);
+            guna2PictureBox2.Location = new Point(47, 984);
             guna2PictureBox2.Name = "guna2PictureBox2";
             guna2PictureBox2.ShadowDecoration.CustomizableEdges = customizableEdges4;
             guna2PictureBox2.Size = new Size(53, 55);
@@ -126,6 +128,7 @@ namespace Menu_Management
             // 
             // Logout
             // 
+            Logout.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             Logout.BorderColor = Color.FromArgb(255, 107, 0);
             Logout.BorderRadius = 20;
             Logout.BorderThickness = 2;
@@ -151,7 +154,7 @@ namespace Menu_Management
             Logout.ImageAlign = HorizontalAlignment.Left;
             Logout.ImageOffset = new Point(50, 0);
             Logout.ImageSize = new Size(25, 25);
-            Logout.Location = new Point(38, 718);
+            Logout.Location = new Point(38, 1043);
             Logout.Name = "Logout";
             Logout.PressedColor = Color.LightGray;
             Logout.ShadowDecoration.CustomizableEdges = customizableEdges6;
@@ -363,14 +366,14 @@ namespace Menu_Management
             MainPanel.Location = new Point(276, 0);
             MainPanel.Name = "MainPanel";
             MainPanel.ShadowDecoration.CustomizableEdges = customizableEdges20;
-            MainPanel.Size = new Size(974, 775);
+            MainPanel.Size = new Size(1124, 1100);
             MainPanel.TabIndex = 1;
             // 
             // MainForm
             // 
             AutoScaleMode = AutoScaleMode.None;
             BackColor = Color.White;
-            ClientSize = new Size(1250, 775);
+            ClientSize = new Size(1400, 1100);
             Controls.Add(MainPanel);
             Controls.Add(SidePanel);
             Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
