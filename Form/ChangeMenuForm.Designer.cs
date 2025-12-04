@@ -199,7 +199,6 @@
             RemoveBtn.ShadowDecoration.CustomizableEdges = customizableEdges4;
             RemoveBtn.Size = new Size(45, 40);
             RemoveBtn.TabIndex = 10;
-            RemoveBtn.Click += RemoveBtn_Click;
             // 
             // AlterBtn
             // 
@@ -218,7 +217,6 @@
             AlterBtn.ShadowDecoration.CustomizableEdges = customizableEdges6;
             AlterBtn.Size = new Size(45, 40);
             AlterBtn.TabIndex = 10;
-            AlterBtn.Click += AlterBtn_Click;
             // 
             // AddBtn
             // 

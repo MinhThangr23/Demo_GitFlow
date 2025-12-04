@@ -1,15 +1,10 @@
 ﻿using Menu_Management.Class;
 using Microsoft.Data.SqlClient;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Serilog;
+
 namespace Menu_Management
 {
     public partial class LoginForm : Form
@@ -19,6 +14,7 @@ namespace Menu_Management
             InitializeComponent();
             Username.KeyDown += Input_KeyDown;
             Password.KeyDown += Input_KeyDown;
+
             Log.Information("Khởi tạo LoginForm thành công.");
         }
 
@@ -26,12 +22,14 @@ namespace Menu_Management
         {
             if (e.KeyCode == Keys.Enter)
             {
-                LoginButton.PerformClick(); // Gọi hàm đăng nhập
+                LoginButton.PerformClick();
             }
         }
-        private bool isValidInput()
+
+        private bool IsValidInput()
         {
-            if (string.IsNullOrWhiteSpace(Username.Text) || string.IsNullOrWhiteSpace(Password.Text))
+            if (string.IsNullOrWhiteSpace(Username.Text) ||
+                string.IsNullOrWhiteSpace(Password.Text))
             {
                 Log.Warning("Người dùng để trống Username hoặc Password.");
                 return false;
@@ -39,15 +37,14 @@ namespace Menu_Management
             return true;
         }
 
-
         private void LoginButton_Click(object sender, EventArgs e)
         {
             Log.Information("Người dùng đang đăng nhập với username: {User}", Username.Text);
+
             try
             {
-                if (!isValidInput())
+                if (!IsValidInput())
                 {
-                    Log.Warning("Dữ liệu nhập vào không hợp lệ.");
                     throw new Exception("All fields must be filled!");
                 }
 
@@ -58,45 +55,35 @@ namespace Menu_Management
                 }
                 else
                 {
-                    Log.Warning("Sai tên đăng nhập hoặc mật khẩu: {User}", Username.Text);
                     throw new Exception("Invalid username or password.");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Lỗi khi xử lý sự kiện đăng nhập.");
+                Log.Error(ex, "Lỗi khi xử lý đăng nhập.");
                 MessageBox.Show(ex.Message, "Login Error");
             }
             finally
             {
-                Log.Debug("Hoàn tất xử lý LoginButton_Click()");
-                Log.Debug("------------------------------------------");
+                Log.Debug("Hoàn tất LoginButton_Click()");
+                Log.Debug("---------------------------------------");
             }
-
         }
 
-        // ✳️ Hàm 1: kiểm tra đăng nhập trong CSDL
+        // =========================================================
+        // HÀM CHECKLOGIN – ĐÃ FIX HOÀN CHỈNH
+        // =========================================================
         private bool CheckLogin(string username, string password)
         {
             Log.Verbose("Bắt đầu CheckLogin()");
             Log.Debug("Username nhận vào: {User}", username);
+
             try
             {
-                MessageBox.Show("Invalid username or password");
-            }
-
-        }
-
-        // ✳️ Hàm 1: kiểm tra đăng nhập trong CSDL
-        private bool CheckLogin(string username, string password)
-        {
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
-            {
-                sqlcon.Open();
-                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Accounts WHERE UserName = @username AND Password = @password", sqlcon))
+                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
                 {
                     sqlcon.Open();
-                    Log.Information("Kết nối SQL mở thành công.");
+                    Log.Information("Kết nối SQL thành công.");
 
                     using (SqlCommand cmd = new SqlCommand(
                         "SELECT * FROM Accounts WHERE UserName = @username AND Password = @password",
@@ -115,7 +102,7 @@ namespace Menu_Management
                         }
                         else
                         {
-                            Log.Warning("Không tìm thấy account phù hợp trong CSDL.");
+                            Log.Warning("Không tìm thấy tài khoản.");
                             return false;
                         }
                     }
@@ -124,11 +111,11 @@ namespace Menu_Management
             catch (SqlException ex)
             {
                 Log.Error(ex, "Lỗi SQL ở CheckLogin()");
-                throw; // ném lỗi lên LoginButton_Click
+                throw;
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Lỗi nghiêm trọng trong CheckLogin()");
+                Log.Fatal(ex, "Lỗi nghiêm trọng ở CheckLogin()");
                 throw;
             }
             finally
@@ -137,7 +124,8 @@ namespace Menu_Management
             }
         }
 
-        // ✳️ Hàm 2: nạp thông tin người dùng từ kết quả truy vấn
+        // =========================================================
+
         private void LoadUserData(SqlDataReader reader)
         {
             try
@@ -149,21 +137,20 @@ namespace Menu_Management
 
                 Login.SetAccountStatus(Login.User, "Online");
 
-                Log.Information("Load dữ liệu user thành công cho: {User}", Login.User);
+                Log.Information("Load dữ liệu user thành công: {User}", Login.User);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Lỗi khi load dữ liệu tài khoản.");
-                throw; // vẫn throw để báo lên trên
+                Log.Error(ex, "Lỗi khi load dữ liệu user");
+                throw;
             }
         }
 
-        // ✳️ Hàm 3: mở form chính sau khi đăng nhập thành công
         private void OpenMainForm(string fullname)
         {
             try
             {
-                Log.Information("Chuẩn bị mở MainForm cho user: {Name}", fullname);
+                Log.Information("Mở MainForm cho user: {User}", fullname);
 
                 this.Hide();
                 MainForm mainForm = new MainForm(fullname);
@@ -171,11 +158,9 @@ namespace Menu_Management
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Không thể mở MainForm.");
+                Log.Fatal(ex, "Không thể mở MainForm");
                 throw;
             }
-
         }
-
     }
 }

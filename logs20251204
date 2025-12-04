@@ -1,0 +1,65 @@
+2025-12-04 20:49:16 [INF] ----- á»¨NG Dá»¤NG KHá»I Äá»NG -----
+2025-12-04 20:49:17 [INF] Khởi tạo LoginForm thành công.
+2025-12-04 20:49:21 [INF] Người dùng đang đăng nhập với username: admin
+2025-12-04 20:49:21 [VRB] Bắt đầu CheckLogin()
+2025-12-04 20:49:21 [DBG] Username nhận vào: admin
+2025-12-04 20:49:22 [INF] Kết nối SQL thành công.
+2025-12-04 20:49:22 [INF] Load dữ liệu user thành công: admin
+2025-12-04 20:49:22 [DBG] Kết thúc CheckLogin()
+2025-12-04 20:49:22 [INF] Đăng nhập thành công cho user: admin
+2025-12-04 20:49:22 [INF] Mở MainForm cho user: Nguyễn Văn A
+2025-12-04 20:49:22 [DBG] Hoàn tất LoginButton_Click()
+2025-12-04 20:49:22 [DBG] ---------------------------------------
+2025-12-04 20:50:08 [INF] Mở form ChangeMenuForm - Bắt đầu tải dữ liệu.
+2025-12-04 20:50:08 [DBG] Tải danh mục thành công: 4
+2025-12-04 20:50:08 [DBG] Tải món ăn thành công: 10
+2025-12-04 20:50:14 [INF] Đã mở kết nối SQL thành công
+2025-12-04 20:50:14 [INF] Lấy Category thành công: Dessert
+2025-12-04 20:50:14 [INF] Đã mở kết nối SQL thành công
+2025-12-04 20:50:14 [INF] Lấy Category thành công: Main Course
+2025-12-04 20:50:15 [INF] Đã mở kết nối SQL thành công
+2025-12-04 20:50:15 [INF] Lấy Category thành công: Drinks
+2025-12-04 20:50:15 [INF] Đã mở kết nối SQL thành công
+2025-12-04 20:50:15 [INF] Lấy Category thành công: Dessert
+2025-12-04 20:52:16 [INF] ----- á»¨NG Dá»¤NG KHá»I Äá»NG -----
+2025-12-04 20:52:16 [INF] Khởi tạo LoginForm thành công.
+2025-12-04 20:52:21 [INF] Người dùng đang đăng nhập với username: admin
+2025-12-04 20:52:21 [VRB] Bắt đầu CheckLogin()
+2025-12-04 20:52:21 [DBG] Username nhận vào: admin
+2025-12-04 20:52:21 [INF] Kết nối SQL thành công.
+2025-12-04 20:52:21 [INF] Load dữ liệu user thành công: admin
+2025-12-04 20:52:21 [DBG] Kết thúc CheckLogin()
+2025-12-04 20:52:21 [INF] Đăng nhập thành công cho user: admin
+2025-12-04 20:52:21 [INF] Mở MainForm cho user: Nguyễn Văn A
+2025-12-04 20:52:21 [DBG] Hoàn tất LoginButton_Click()
+2025-12-04 20:52:21 [DBG] ---------------------------------------
+2025-12-04 21:36:40 [INF] ----- á»¨NG Dá»¤NG KHá»I Äá»NG -----
+2025-12-04 21:36:41 [INF] Khởi tạo LoginForm thành công.
+2025-12-04 21:36:46 [INF] Người dùng đang đăng nhập với username: admin
+2025-12-04 21:36:46 [VRB] Bắt đầu CheckLogin()
+2025-12-04 21:36:46 [DBG] Username nhận vào: admin
+2025-12-04 21:36:47 [INF] Kết nối SQL thành công.
+2025-12-04 21:36:47 [INF] Load dữ liệu user thành công: admin
+2025-12-04 21:36:47 [DBG] Kết thúc CheckLogin()
+2025-12-04 21:36:47 [INF] Đăng nhập thành công cho user: admin
+2025-12-04 21:36:47 [INF] Mở MainForm cho user: Nguyễn Văn A
+2025-12-04 21:36:47 [DBG] Hoàn tất LoginButton_Click()
+2025-12-04 21:36:47 [DBG] ---------------------------------------
+2025-12-04 21:36:50 [INF] [SaveBill] Bắt đầu lưu hóa đơn. BillID=6784, ItemNumber=4, Total=245000
+2025-12-04 21:36:50 [INF] Kết nối SQL thành công.
+2025-12-04 21:36:50 [DBG] Bắt đầu transaction cho Bill và BillDetails.
+2025-12-04 21:36:50 [INF] Lưu bảng Bills thành công.
+2025-12-04 21:36:50 [DBG] Đã lưu món: PannaCotta, SL=1, Giá=45000
+2025-12-04 21:36:50 [DBG] Đã lưu món: cupcake, SL=1, Giá=45000
+2025-12-04 21:36:50 [DBG] Đã lưu món: Strawberry Mojito, SL=1, Giá=35000
+2025-12-04 21:36:50 [DBG] Đã lưu món: Beef Steak, SL=1, Giá=120000
+2025-12-04 21:36:50 [INF] Lưu hóa đơn hoàn tất thành công cho BillID=6784
+2025-12-04 21:36:50 [DBG] Kết thúc SaveBill()
+2025-12-04 21:36:50 [DBG] --------------------------------------
+2025-12-04 21:37:03 [INF] Mở form ChangeMenuForm - Bắt đầu tải dữ liệu.
+2025-12-04 21:37:03 [DBG] Tải danh mục thành công: 4
+2025-12-04 21:37:03 [DBG] Tải món ăn thành công: 10
+2025-12-04 21:37:08 [INF] Đã mở kết nối SQL thành công
+2025-12-04 21:37:08 [INF] Lấy Category thành công: Dessert
+2025-12-04 21:37:08 [INF] Đã mở kết nối SQL thành công
+2025-12-04 21:37:08 [INF] Lấy Category thành công: Drinks

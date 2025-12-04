@@ -350,7 +350,6 @@
             DeleteAllEmployee.Size = new Size(130, 50);
             DeleteAllEmployee.TabIndex = 17;
             DeleteAllEmployee.Text = "Delete all";
-            DeleteAllEmployee.Click += DeleteAllEmployee_Click;
             // 
             // DeleteEmployeeButton
             // 

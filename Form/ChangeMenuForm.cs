@@ -19,7 +19,7 @@ namespace Menu_Management
             this.mainPanel = mainPanel;
         }
 
-        #region Load dữ liệu
+        // =================== FORM LOAD ===================
         private void ChangeMenuForm_Load(object sender, EventArgs e)
         {
             Log.Information("Mở form ChangeMenuForm - Bắt đầu tải dữ liệu.");
@@ -27,10 +27,9 @@ namespace Menu_Management
             LoadDishes();
         }
 
-        private void LoadDishes()
+        // =================== TẢI DANH MỤC ===================
+        private void LoadCategories()
         {
-            ShowData.ColumnHeadersHeight = 30; // Đặt chiều cao tiêu đề cột
-            ShowData.Columns.Clear(); // Xóa các cột hiện tại trong DataGridView
             try
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -44,21 +43,20 @@ namespace Menu_Management
                 CategoryCBB.DisplayMember = "CategoryName";
                 CategoryCBB.ValueMember = "CategoryID";
 
-                Log.Debug("Tải danh mục thành công. Số lượng: {Count}", dt.Rows.Count);
+                Log.Debug("Tải danh mục thành công: {Count}", dt.Rows.Count);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Không thể tải danh mục từ CSDL.");
-                MessageBox.Show($"Không thể tải danh mục: {ex.Message}", "Lỗi Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.Error(ex, "Lỗi tải danh mục");
+                MessageBox.Show(ex.Message);
             }
+        }
 
+        // =================== TẢI DANH SÁCH MÓN ĂN ===================
         private void LoadDishes()
         {
             try
             {
-                ShowData.ColumnHeadersHeight = 30;
-                ShowData.Columns.Clear();
-
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
                 using var cmd = new SqlCommand("SELECT * FROM Dishes WHERE IsDeleted = 0", con);
@@ -69,309 +67,173 @@ namespace Menu_Management
                 ShowData.DataSource = dt;
                 if (ShowData.Columns.Contains("DishIMG")) ShowData.Columns["DishIMG"].Visible = false;
                 if (ShowData.Columns.Contains("IsDeleted")) ShowData.Columns["IsDeleted"].Visible = false;
-                Log.Debug("Tải danh sách món ăn thành công. Số lượng: {Count}", dt.Rows.Count);
+
+                Log.Debug("Tải món ăn thành công: {Count}", dt.Rows.Count);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Không thể tải danh sách món ăn.");
-                MessageBox.Show($"Không thể tải danh sách món ăn: {ex.Message}", "Lỗi Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.Error(ex, "Lỗi tải món ăn");
             }
         }
-        #endregion
 
-        #region Kiểm tra đầu vào
+        // =================== KIỂM TRA INPUT ===================
         private void ValidateInputOrThrow(bool requireImage = true)
         {
             if (string.IsNullOrWhiteSpace(DishIdTxt.Text))
-                throw new ArgumentException("Vui lòng nhập ID món ăn.");
+                throw new ArgumentException("Vui lòng nhập ID món ăn");
             if (string.IsNullOrWhiteSpace(NameTxt.Text))
-                throw new ArgumentException("Vui lòng nhập tên món ăn.");
+                throw new ArgumentException("Vui lòng nhập tên món ăn");
             if (CategoryCBB.SelectedValue == null)
-                throw new ArgumentException("Vui lòng chọn danh mục.");
-            if (!float.TryParse(PriceTxt.Text.Trim(), out float price) || price <= 0)
-                throw new ArgumentException("Giá phải là số dương hợp lệ.");
-            if (requireImage && pictureBox.Image == null)
-                throw new ArgumentException("Vui lòng chọn ảnh món ăn.");
-        }
-        #endregion
+                throw new ArgumentException("Vui lòng chọn danh mục");
 
-        #region Xử lý ảnh
+            if (!float.TryParse(PriceTxt.Text.Trim(), out float price) || price <= 0)
+                throw new ArgumentException("Giá phải hợp lệ");
+
+            if (requireImage && pictureBox.Image == null)
+                throw new ArgumentException("Vui lòng chọn ảnh");
+        }
+
+        // =================== LẤY ẢNH ===================
         private byte[] GetImageBytesFromPictureBox()
         {
             if (pictureBox.Image == null) return null;
-            try
-            {
-                using var ms = new MemoryStream();
-                using var imgClone = new Bitmap(pictureBox.Image);
-                imgClone.Save(ms, pictureBox.Image.RawFormat);
-                Log.Debug("Chuyển đổi ảnh thành byte[] thành công. Kích thước: {Size} bytes", ms.Length);
-                return ms.ToArray();
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Lỗi khi chuyển đổi ảnh sang byte[].");
-                throw;
-            }
+
+            using var ms = new MemoryStream();
+            pictureBox.Image.Save(ms, pictureBox.Image.RawFormat);
+            return ms.ToArray();
         }
 
-        private void AlterBtn_Click(object sender, EventArgs e)
+        // =================== LOAD ẢNH RA PICTUREBOX ===================
+        private void LoadImageToPictureBox(byte[] imageBytes)
         {
-            if (imageBytes == null || imageBytes.Length == 0)
-            {
-                pictureBox.Image = null;
-                return;
-            }
             try
             {
                 using var ms = new MemoryStream(imageBytes);
                 pictureBox.Image = Image.FromStream(ms);
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
             }
-            catch (Exception ex)
+            catch
             {
-                Log.Error(ex, "Lỗi khi load ảnh từ byte[].");
                 pictureBox.Image = null;
             }
         }
-        #endregion
 
-        #region Thêm món ăn
+        // =================== THÊM MÓN ĂN ===================
         private void AddBtn_Click(object sender, EventArgs e)
         {
-            Log.Information("Người dùng nhấn nút Thêm món ăn.");
             try
             {
-                ValidateInputOrThrow(requireImage: true);
-            }
-            catch (ArgumentException aex)
-            {
-                Log.Warning(aex, "Input không hợp lệ khi thêm món ăn.");
-                MessageBox.Show(aex.Message, "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                ValidateInputOrThrow(true);
+                byte[] img = GetImageBytesFromPictureBox();
 
-            byte[] imageBytes = GetImageBytesFromPictureBox();
-
-            try
-            {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
-                const string sql = @"
+
+                using var cmd = new SqlCommand(@"
                     INSERT INTO Dishes (DishID, DishName, CategoryID, Price, DishIMG)
-                    VALUES (@DishID, @DishName, @CategoryID, @Price, @DishIMG)";
-                using var cmd = new SqlCommand(sql, con);
+                    VALUES (@DishID, @Name, @Cate, @Price, @Img)", con);
+
                 cmd.Parameters.AddWithValue("@DishID", DishIdTxt.Text.Trim());
-                cmd.Parameters.AddWithValue("@DishName", NameTxt.Text.Trim());
-                cmd.Parameters.AddWithValue("@CategoryID", CategoryCBB.SelectedValue);
+                cmd.Parameters.AddWithValue("@Name", NameTxt.Text.Trim());
+                cmd.Parameters.AddWithValue("@Cate", CategoryCBB.SelectedValue);
                 cmd.Parameters.AddWithValue("@Price", float.Parse(PriceTxt.Text.Trim()));
-                cmd.Parameters.AddWithValue("@DishIMG", imageBytes ?? (object)DBNull.Value);
-                int rows = cmd.ExecuteNonQuery();
-                if (rows > 0)
-                {
-                    Log.Information("Thêm món ăn thành công: {DishID} - {DishName}", DishIdTxt.Text.Trim(), NameTxt.Text.Trim());
-                    MessageBox.Show("Thêm món ăn thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    Log.Warning("Thêm món ăn thất bại: không có dòng nào bị ảnh hưởng.");
-                    MessageBox.Show("Không thể thêm món ăn.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (SqlException sqlEx) when (sqlEx.Number == 2627 || sqlEx.Number == 2601) // Trùng khóa chính
-            {
-                Log.Warning(sqlEx, "Trùng ID món ăn: {DishID}", DishIdTxt.Text.Trim());
-                MessageBox.Show("ID món ăn đã tồn tại. Vui lòng chọn ID khác.", "Trùng lặp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (SqlException sqlEx)
-            {
-                Log.Error(sqlEx, "Lỗi SQL khi thêm món ăn.");
-                MessageBox.Show($"Lỗi cơ sở dữ liệu: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
+                cmd.Parameters.AddWithValue("@Img", img ?? (object)DBNull.Value);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Thêm món thành công!");
                 LoadDishes();
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
-        #endregion
 
-        #region Cập nhật món ăn
+        // =================== CẬP NHẬT MÓN ĂN ===================
         private void AlterBtn_Click(object sender, EventArgs e)
         {
-            Log.Information("Người dùng nhấn nút Cập nhật món ăn.");
-            try
-            {
-                ValidateInputOrThrow(requireImage: false);
-            }
-            catch (ArgumentException aex)
-            {
-                Log.Warning(aex, "Input không hợp lệ khi cập nhật món ăn.");
-                MessageBox.Show(aex.Message, "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (ShowData.CurrentRow == null || ShowData.CurrentRow.Cells["DishID"].Value == null)
-            {
-                Log.Warning("Không có món ăn nào được chọn để cập nhật.");
-                MessageBox.Show("Vui lòng chọn món ăn cần cập nhật.", "Chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (ShowData.CurrentRow == null) return;
 
             string dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
-            byte[] imageBytes = GetImageBytesFromPictureBox();
 
-        private void RemoveBtn_Click(object sender, EventArgs e)
-        {
             try
             {
+                ValidateInputOrThrow(false);
+                byte[] img = GetImageBytesFromPictureBox();
+
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
-                const string sql = @"
+
+                using var cmd = new SqlCommand(@"
                     UPDATE Dishes
-                    SET DishName = @DishName,
-                        CategoryID = @CategoryID,
-                        Price = @Price,
-                        DishIMG = @DishIMG
-                    WHERE DishID = @DishID";
-                using var cmd = new SqlCommand(sql, con);
-                cmd.Parameters.AddWithValue("@DishID", dishId);
-                cmd.Parameters.AddWithValue("@DishName", NameTxt.Text.Trim());
-                cmd.Parameters.AddWithValue("@CategoryID", CategoryCBB.SelectedValue);
+                    SET DishName=@Name, CategoryID=@Cate, Price=@Price, DishIMG=@Img
+                    WHERE DishID=@ID", con);
+
+                cmd.Parameters.AddWithValue("@ID", dishId);
+                cmd.Parameters.AddWithValue("@Name", NameTxt.Text.Trim());
+                cmd.Parameters.AddWithValue("@Cate", CategoryCBB.SelectedValue);
                 cmd.Parameters.AddWithValue("@Price", float.Parse(PriceTxt.Text.Trim()));
-                cmd.Parameters.AddWithValue("@DishIMG", imageBytes ?? (object)DBNull.Value);
-                int rows = cmd.ExecuteNonQuery();
-                if (rows > 0)
-                {
-                    Log.Information("Cập nhật món ăn thành công: {DishID}", dishId);
-                    MessageBox.Show("Cập nhật thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    Log.Warning("Không tìm thấy món ăn để cập nhật: {DishID}", dishId);
-                    MessageBox.Show("Không cập nhật được (không tìm thấy món).", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (SqlException sqlEx)
-            {
-                Log.Error(sqlEx, "Lỗi SQL khi cập nhật món ăn: {DishID}", dishId);
-                MessageBox.Show($"Lỗi cơ sở dữ liệu: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
+                cmd.Parameters.AddWithValue("@Img", img ?? (object)DBNull.Value);
+
+                cmd.ExecuteNonQuery();
+
+                MessageBox.Show("Cập nhật thành công!");
                 LoadDishes();
-            }
-
-        }
-        #endregion
-
-        #region Xóa món ăn (soft delete)
-        private void RemoveBtn_Click(object sender, EventArgs e)
-        {
-            Log.Information("Người dùng nhấn nút Xóa món ăn.");
-
-            if (ShowData.CurrentRow == null || ShowData.CurrentRow.Cells["DishID"].Value == null)
-            {
-                Log.Warning("Không có món ăn nào được chọn để xóa.");
-                MessageBox.Show("Vui lòng chọn món ăn cần xóa.", "Chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
-
-            try
-            {
-                using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
-                con.Open();
-
-                using var cmd = new SqlCommand(
-                    "UPDATE Dishes SET IsDeleted = 1 WHERE DishID = @DishID", con);
-                cmd.Parameters.AddWithValue("@DishID", dishId);
-
-                int rows = cmd.ExecuteNonQuery();
-
-                if (rows > 0)
-                {
-                    Log.Information("Xóa mềm món ăn thành công: {DishID}", dishId);
-                    MessageBox.Show("Xóa thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    Log.Warning("Không tìm thấy món ăn để xóa: {DishID}", dishId);
-                    MessageBox.Show("Không tìm thấy món ăn để xóa.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (SqlException ex) when (ex.Number == 547)
-            {
-                Log.Warning(ex, "Không thể xóa món ăn vì còn tồn tại trong hóa đơn chưa thanh toán: {DishID}", dishId);
-                MessageBox.Show("Không thể xóa món ăn vì vẫn còn trong hóa đơn chưa thanh toán.", "Lỗi ràng buộc", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Lỗi khi xóa món ăn: {DishID}", dishId);
-                MessageBox.Show("Đã xảy ra lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                LoadDishes();
+                MessageBox.Show(ex.Message);
             }
         }
-        #endregion
 
-        #region Chọn ảnh
+        // =================== XÓA MỀM ===================
+        private void RemoveBtn_Click(object sender, EventArgs e)
+        {
+            if (ShowData.CurrentRow == null) return;
+
+            string dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
+
+            using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
+            con.Open();
+
+            using var cmd = new SqlCommand("UPDATE Dishes SET IsDeleted = 1 WHERE DishID = @ID", con);
+            cmd.Parameters.AddWithValue("@ID", dishId);
+            cmd.ExecuteNonQuery();
+
+            MessageBox.Show("Xóa thành công!");
+            LoadDishes();
+        }
+
+        // =================== CHỌN ẢNH ===================
         private void Browse_Click(object sender, EventArgs e)
         {
-            Log.Debug("Người dùng mở dialog chọn ảnh món ăn.");
-            pictureBox.Image = null;
-            using var dlg = new OpenFileDialog
-            {
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif"
-            };
+            using var dlg = new OpenFileDialog();
+            dlg.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+
             if (dlg.ShowDialog() == DialogResult.OK)
             {
-                try
-                {
-                    pictureBox.Image = Image.FromFile(dlg.FileName);
-                    pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
-                    Log.Debug("Load ảnh thành công từ đường dẫn: {Path}", dlg.FileName);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Không thể load ảnh từ file: {Path}", dlg.FileName);
-                    MessageBox.Show("Không thể tải ảnh. File có thể bị hỏng.", "Lỗi ảnh", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                pictureBox.Image = Image.FromFile(dlg.FileName);
+                pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
             }
-            pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
-
         }
-        #endregion
 
-        #region Khi chọn dòng trong DataGridView
+        // =================== CHỌN DÒNG ===================
         private void ShowData_SelectionChanged(object sender, EventArgs e)
         {
-            if (ShowData.CurrentRow == null || ShowData.CurrentRow.Index < 0) return;
-            try
-            {
-                var row = ShowData.CurrentRow;
-                DishIdTxt.Text = row.Cells["DishID"].Value?.ToString() ?? string.Empty;
-                NameTxt.Text = row.Cells["DishName"].Value?.ToString() ?? string.Empty;
-                PriceTxt.Text = row.Cells["Price"].Value?.ToString() ?? string.Empty;
+            if (ShowData.CurrentRow == null) return;
 
-                if (row.Cells["CategoryID"].Value != null)
-                    CategoryCBB.SelectedValue = row.Cells["CategoryID"].Value;
+            DishIdTxt.Text = ShowData.CurrentRow.Cells["DishID"].Value?.ToString();
+            NameTxt.Text = ShowData.CurrentRow.Cells["DishName"].Value?.ToString();
+            PriceTxt.Text = ShowData.CurrentRow.Cells["Price"].Value?.ToString();
 
-                if (row.Cells["DishIMG"].Value != DBNull.Value && row.Cells["DishIMG"].Value is byte[] bytes)
-                    LoadImageToPictureBox(bytes);
-                else
-                    pictureBox.Image = null;
+            if (ShowData.CurrentRow.Cells["CategoryID"].Value != null)
+                CategoryCBB.SelectedValue = ShowData.CurrentRow.Cells["CategoryID"].Value;
 
-                Log.Debug("Hiển thị thông tin món ăn: {DishID}", DishIdTxt.Text);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Lỗi khi hiển thị thông tin món ăn từ DataGridView.");
-                MessageBox.Show($"Lỗi khi hiển thị thông tin món ăn: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
+            if (ShowData.CurrentRow.Cells["DishIMG"].Value is byte[] bytes)
+                LoadImageToPictureBox(bytes);
+            else
+                pictureBox.Image = null;
         }
-        #endregion
     }
 }
