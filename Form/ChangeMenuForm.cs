@@ -1,12 +1,11 @@
-﻿using Serilog;
-using Menu_Management.Class;
+﻿using Menu_Management.Class;
 using Microsoft.Data.SqlClient;
-using System.Data;
+using Serilog;
 using System;
+using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using Serilog.Events;
 
 namespace Menu_Management
 {
@@ -19,6 +18,7 @@ namespace Menu_Management
             InitializeComponent();
             this.mainPanel = mainPanel;
         }
+
         #region Load dữ liệu
         private void ChangeMenuForm_Load(object sender, EventArgs e)
         {
@@ -26,6 +26,7 @@ namespace Menu_Management
             LoadCategories();
             LoadDishes();
         }
+
         private void LoadCategories()
         {
             try
@@ -49,12 +50,14 @@ namespace Menu_Management
                 MessageBox.Show($"Không thể tải danh mục: {ex.Message}", "Lỗi Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void LoadDishes()
         {
-            ShowData.ColumnHeadersHeight = 30;
-            ShowData.Columns.Clear();
             try
             {
+                ShowData.ColumnHeadersHeight = 30;
+                ShowData.Columns.Clear();
+
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
                 using var cmd = new SqlCommand("SELECT * FROM Dishes WHERE IsDeleted = 0", con);
@@ -74,6 +77,7 @@ namespace Menu_Management
             }
         }
         #endregion
+
         #region Kiểm tra đầu vào
         private void ValidateInputOrThrow(bool requireImage = true)
         {
@@ -89,6 +93,7 @@ namespace Menu_Management
                 throw new ArgumentException("Vui lòng chọn ảnh món ăn.");
         }
         #endregion
+
         #region Xử lý ảnh
         private byte[] GetImageBytesFromPictureBox()
         {
@@ -107,6 +112,7 @@ namespace Menu_Management
                 throw;
             }
         }
+
         private void LoadImageToPictureBox(byte[] imageBytes)
         {
             if (imageBytes == null || imageBytes.Length == 0)
@@ -127,6 +133,7 @@ namespace Menu_Management
             }
         }
         #endregion
+
         #region Thêm món ăn
         private void AddBtn_Click(object sender, EventArgs e)
         {
@@ -141,7 +148,9 @@ namespace Menu_Management
                 MessageBox.Show(aex.Message, "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             byte[] imageBytes = GetImageBytesFromPictureBox();
+
             try
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -183,6 +192,7 @@ namespace Menu_Management
             }
         }
         #endregion
+
         #region Cập nhật món ăn
         private void AlterBtn_Click(object sender, EventArgs e)
         {
@@ -197,14 +207,17 @@ namespace Menu_Management
                 MessageBox.Show(aex.Message, "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             if (ShowData.CurrentRow == null || ShowData.CurrentRow.Cells["DishID"].Value == null)
             {
                 Log.Warning("Không có món ăn nào được chọn để cập nhật.");
                 MessageBox.Show("Vui lòng chọn món ăn cần cập nhật.", "Chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             string dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
             byte[] imageBytes = GetImageBytesFromPictureBox();
+
             try
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -245,6 +258,7 @@ namespace Menu_Management
             }
         }
         #endregion
+
         #region Xóa món ăn (soft delete)
         private void RemoveBtn_Click(object sender, EventArgs e)
         {
@@ -256,14 +270,20 @@ namespace Menu_Management
                 MessageBox.Show("Vui lòng chọn món ăn cần xóa.", "Chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             string dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
+
             try
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
-                using var cmd = new SqlCommand("UPDATE Dishes SET IsDeleted = 1 WHERE DishID = @DishID", con);
+
+                using var cmd = new SqlCommand(
+                    "UPDATE Dishes SET IsDeleted = 1 WHERE DishID = @DishID", con);
                 cmd.Parameters.AddWithValue("@DishID", dishId);
+
                 int rows = cmd.ExecuteNonQuery();
+
                 if (rows > 0)
                 {
                     Log.Information("Xóa mềm món ăn thành công: {DishID}", dishId);
@@ -275,71 +295,23 @@ namespace Menu_Management
                     MessageBox.Show("Không tìm thấy món ăn để xóa.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-            catch (SqlException sqlEx) when (sqlEx.Number == 547) // FK constraint
+            catch (SqlException ex) when (ex.Number == 547)
             {
-                Log.Warning(sqlEx, "Không thể xóa món ăn vì còn tồn tại trong hóa đơn chưa thanh toán: {DishID}", dishId);
+                Log.Warning(ex, "Không thể xóa món ăn vì còn tồn tại trong hóa đơn chưa thanh toán: {DishID}", dishId);
                 MessageBox.Show("Không thể xóa món ăn vì vẫn còn trong hóa đơn chưa thanh toán.", "Lỗi ràng buộc", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (SqlException sqlEx)
-            {
-                Log.Error(sqlEx, "Lỗi SQL khi xóa món ăn: {DishID}", dishId);
-                MessageBox.Show($"Lỗi cơ sở dữ liệu: {sqlEx.Message}", "Lỗi SQL", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-                    sqlcon.Open();
-
-                    SqlCommand deleteCmd = new SqlCommand(
-                        "UPDATE Dishes SET IsDeleted = 1 WHERE DishID = @DishID", sqlcon);
-
-                    DataGridViewRow selectedRow = ShowData.CurrentRow;
-
-                    if (selectedRow == null || selectedRow.Cells["DishID"].Value == null)
-                    {
-                        MessageBox.Show("Vui lòng chọn món ăn cần xóa.");
-                        return;
-                    }
-                    string dishId = selectedRow.Cells["DishID"].Value.ToString();
-                    deleteCmd.Parameters.AddWithValue("@DishID", dishId);
-
-                    int rows = deleteCmd.ExecuteNonQuery();
-
-                    if (rows > 0)
-                        MessageBox.Show("Xóa thành công!");
-                    else
-                        MessageBox.Show("Không tìm thấy món ăn cần xóa.");
-                }
-            }
-            catch (SqlException ex)
-            {
-                // Ví dụ: lỗi ràng buộc FK => món đang nằm trong hóa đơn chưa thanh toán
-                MessageBox.Show("Không thể xóa vì món đang có trong đơn chưa thanh toán!");
-
-                // ném lại lỗi để lớp ngoài (hoặc log) xử lý tiếp
-                throw;
             }
             catch (Exception ex)
             {
-                // Lỗi khác
-                MessageBox.Show("Đã xảy ra lỗi: " + ex.Message);
-                throw;
+                Log.Error(ex, "Lỗi khi xóa món ăn: {DishID}", dishId);
+                MessageBox.Show("Đã xảy ra lỗi: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
-            {
-                // Dù lỗi hay không đều phải load lại dữ liệu
-                LoadDishes();
-            }
-        }
-
-
-        private void ChangeMenuForm_Load(object sender, EventArgs e)
-        {
-
-            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
             {
                 LoadDishes();
             }
         }
         #endregion
+
         #region Chọn ảnh
         private void Browse_Click(object sender, EventArgs e)
         {
@@ -365,6 +337,7 @@ namespace Menu_Management
             }
         }
         #endregion
+
         #region Khi chọn dòng trong DataGridView
         private void ShowData_SelectionChanged(object sender, EventArgs e)
         {
