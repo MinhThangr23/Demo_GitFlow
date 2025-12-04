@@ -17,6 +17,7 @@ namespace Menu_Management
             Log.Information("Mở form quản lý nhân viên (DeleteEmployeeButton).");
             DatabaseHelper.LoadRoles(RoleComboBox);
             DatabaseHelper.ShowEmployee(EmployeeViewer);
+
         }
         #region Kiểm tra đầu vào - Guard Clause + Throw
         private void ValidateInputOrThrow()
@@ -36,7 +37,7 @@ namespace Menu_Management
         #region Kiểm tra username tồn tại
         private bool DoesUsernameExist(string username)
         {
-            try
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
@@ -75,7 +76,7 @@ namespace Menu_Management
                 MessageBox.Show("Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.", "Trùng lặp", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            try
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();
@@ -141,7 +142,7 @@ namespace Menu_Management
                 MessageBox.Show("Tài khoản này đang online, không thể xóa!", "Không thể xóa", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
-            try
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
                 con.Open();

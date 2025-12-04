@@ -1,4 +1,4 @@
-﻿using Serilog;
+ï»¿using Serilog;
 namespace Menu_Management
 {
     internal static class Program
@@ -6,23 +6,23 @@ namespace Menu_Management
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
-        // Khai báo m?t logger cho Program.cs 
+        // Khai bÃ¡o m?t logger cho Program.cs 
         [STAThread]
         static void Main()
         {
-             // Khởi tạo Serilog
+             // Khá»i táº¡o Serilog
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Verbose() // Thiết lập mức log tối thiểu là Verbose để ghi lại tất cả các mức log
-                .WriteTo.File("C:/Users/PC/OneDrive/Máy tính/Demo_GitFlow/logs/app_log.txt", 
+                .MinimumLevel.Verbose() // Thiáº¿t láº­p má»©c log tá»i thiá»u lÃ  Verbose Äá» ghi láº¡i táº¥t cáº£ cÃ¡c má»©c log
+                .WriteTo.File("C:/Users/PC/OneDrive/MÃ¡y tÃ­nh/Demo_GitFlow/logs/app_log.txt", 
                     rollingInterval: RollingInterval.Day, 
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")// Định dạng log với timestamp, mức độ log, và thông điệp
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}")// Äá»nh dáº¡ng log vá»i timestamp, má»©c Äá» log, vÃ  thÃ´ng Äiá»p
                 .CreateLogger();
-            Log.Information("----- ỨNG DỤNG KHỞI ĐỘNG -----");
+            Log.Information("----- á»¨NG Dá»¤NG KHá»I Äá»NG -----");
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new LoginForm());
-            // Đóng log khi tắt app
+            // ÄÃ³ng log khi táº¯t app
             Log.CloseAndFlush();
         }
     }

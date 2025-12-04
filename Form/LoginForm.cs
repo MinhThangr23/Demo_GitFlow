@@ -82,7 +82,18 @@ namespace Menu_Management
             Log.Debug("Username nhận vào: {User}", username);
             try
             {
-                using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+                MessageBox.Show("Invalid username or password");
+            }
+
+        }
+
+        // ✳️ Hàm 1: kiểm tra đăng nhập trong CSDL
+        private bool CheckLogin(string username, string password)
+        {
+            using (SqlConnection sqlcon = new SqlConnection(DatabaseHelper.GetConnectionString()))
+            {
+                sqlcon.Open();
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Accounts WHERE UserName = @username AND Password = @password", sqlcon))
                 {
                     sqlcon.Open();
                     Log.Information("Kết nối SQL mở thành công.");

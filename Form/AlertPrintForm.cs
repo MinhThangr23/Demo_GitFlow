@@ -91,6 +91,8 @@ namespace Menu_Management
             billLines.Add("  Thank you for your support!");
         }
 
+
+
         private void printDocument_PrintPage(object sender, PrintPageEventArgs e)
         {
             Font font = new Font("Courier New", 12);

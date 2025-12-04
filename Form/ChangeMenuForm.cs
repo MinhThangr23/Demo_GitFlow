@@ -27,8 +27,10 @@ namespace Menu_Management
             LoadDishes();
         }
 
-        private void LoadCategories()
+        private void LoadDishes()
         {
+            ShowData.ColumnHeadersHeight = 30; // Đặt chiều cao tiêu đề cột
+            ShowData.Columns.Clear(); // Xóa các cột hiện tại trong DataGridView
             try
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -49,7 +51,6 @@ namespace Menu_Management
                 Log.Error(ex, "Không thể tải danh mục từ CSDL.");
                 MessageBox.Show($"Không thể tải danh mục: {ex.Message}", "Lỗi Database", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
 
         private void LoadDishes()
         {
@@ -113,7 +114,7 @@ namespace Menu_Management
             }
         }
 
-        private void LoadImageToPictureBox(byte[] imageBytes)
+        private void AlterBtn_Click(object sender, EventArgs e)
         {
             if (imageBytes == null || imageBytes.Length == 0)
             {
@@ -218,6 +219,8 @@ namespace Menu_Management
             string dishId = ShowData.CurrentRow.Cells["DishID"].Value.ToString();
             byte[] imageBytes = GetImageBytesFromPictureBox();
 
+        private void RemoveBtn_Click(object sender, EventArgs e)
+        {
             try
             {
                 using var con = new SqlConnection(DatabaseHelper.GetConnectionString());
@@ -256,6 +259,7 @@ namespace Menu_Management
             {
                 LoadDishes();
             }
+
         }
         #endregion
 
@@ -335,6 +339,8 @@ namespace Menu_Management
                     MessageBox.Show("Không thể tải ảnh. File có thể bị hỏng.", "Lỗi ảnh", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+            pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
+
         }
         #endregion
 
@@ -364,6 +370,7 @@ namespace Menu_Management
                 Log.Error(ex, "Lỗi khi hiển thị thông tin món ăn từ DataGridView.");
                 MessageBox.Show($"Lỗi khi hiển thị thông tin món ăn: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+
         }
         #endregion
     }

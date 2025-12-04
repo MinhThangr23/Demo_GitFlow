@@ -1,4 +1,5 @@
-﻿using Menu_Management.Class;
+﻿using log4net;
+using Menu_Management.Class;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
