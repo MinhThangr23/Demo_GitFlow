@@ -28,15 +28,11 @@ namespace Menu_Management.Class
                 return null;
             }
         }
-
         internal static string GetConnectionString()
         {
             // Replace with your actual database connection string
             return @"Data Source=localhost;Initial Catalog=Restaurant_Menu;Integrated Security=True;Trust Server Certificate=True";
         }
-
-
-
         internal static void ShowCategory(FlowLayoutPanel fl,FlowLayoutPanel Orderfl,Label TotalLabel, FlowLayoutPanel DishShowPanel, HomeForm hf)
         {
             fl.Controls.Clear(); //Xóa tất cả các điều khiển trong FlowLayoutPanel trước khi thêm mới
@@ -64,7 +60,6 @@ namespace Menu_Management.Class
                 }
             }
         }
-
         public static void ShowDishesBySearch(FlowLayoutPanel fl, string text)
         {
             fl.Controls.Clear();
@@ -154,7 +149,6 @@ namespace Menu_Management.Class
                 reader.Close();
             }
         }
-
         internal static void ShowEmployee(DataGridView datagridview)
         {
             datagridview.Columns.Clear(); //Xóa các cột hiện tại trong DataGridView
